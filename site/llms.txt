@@ -1,0 +1,75 @@
+# Harnessing Claude Code
+
+> From zero to graph engineering on AI agents — for people who use them.
+> 119 lessons across 20 phases. The path is the URL.
+
+## API and MCP
+
+- [Developer documentation](developer.html): public read-only API, MCP server, errors, quotas, versioning.
+- [OpenAPI 3.1](openapi.json): typed REST operations.
+- [MCP manifest](server.json): connect using Streamable HTTP at https://harnessing.example/mcp.
+
+> A free, open-source course on using AI agents well. Not an ML course — it assumes
+> you're using models, not training them. Lessons are markdown at
+> `phases/NN-phase/NN-slug/docs/en.md`. Read them via the API or directly.
+
+Canonical site: https://harnessing.example
+Source: https://github.com/your-org/harnessing-claude-code
+Lesson words: ~119 · Phases: 20 · Practice modules: 16
+
+## Developer resources
+
+- [Developer documentation](developer.html) — machine-readable site contracts
+- [OpenAPI description](openapi.json) — typed REST API
+- [Sitemap](sitemap.xml) — canonical URL inventory
+- [Glossary](glossary.html) — terms used in lessons
+- [Catalog](catalog.html) — all 119 lessons
+
+## Lesson URL scheme
+
+`/phases/NN-phase-slug/NN-lesson-slug.html` — every lesson is one directory at this path. The path is the URL.
+
+Example: `/phases/00-setup-and-tooling/01-dev-environment.html` is Lesson 1 of Phase 0.
+
+## Phase 0: Setup & Tooling
+Your tools shape your thinking.
+
+- [Dev Environment](phases/00-setup-and-tooling/01-dev-environment.html) — Verify your tools are real, write CLAUDE.md, get your bearings.
+- [Git as Your Safety Net](phases/00-setup-and-tooling/02-git-and-collaboration.html) — Four states, the safety net, recovery.
+- [Terminal and Shell](phases/00-setup-and-tooling/03-terminal-and-shell.html) — Read what the agent is about to run.
+- [Editor Setup](phases/00-setup-and-tooling/04-editor-setup.html) — Format-on-save, integrated terminal, project-wide search, bound test runner.
+- [Debugging and Profiling](phases/00-setup-and-tooling/05-debugging-and-profiling.html) — Most agent problems are environment problems.
+
+## Phase 3: Models & Families
+When small wins. Open-weight vs frontier. Decision models beat generation on cost.
+
+- [Open-Weight vs Frontier](phases/03-models-and-families/19-open-weight-vs-frontier.html) — The difference is whether the weights are public, not how big the model is.
+
+## Phase 4: Claude Code
+The gateway phase. Half the course inherits its terminology from here.
+
+- [What Claude Code Is](phases/04-claude-code/27-what-claude-code-is.html) — Terminal tool, goal-shaped, agent not completion.
+- [Install, First Run, Verify](phases/04-claude-code/28-install-first-run-verify.html) — Presence is not correctness.
+- [Files and Edits — and When It Refuses](phases/04-claude-code/29-files-and-edits-and-when-it-refuses.html) — A refusal is information, not a wall.
+- [Sessions, /clear, /compact](phases/04-claude-code/30-sessions-clear-compact.html) — A session has memory. It fills up.
+- [The Agentic Loop](phases/04-claude-code/31-the-agentic-loop.html) — read, decide, act, observe. The reframe.
+- [What Loads Into the Window, and What Doesn't](phases/04-claude-code/32-what-loads-into-the-window.html) — The block is a budget.
+- [Permissions and Permission Modes](phases/04-claude-code/33-permissions-and-permission-modes.html) — The folder trust prompt is the boundary.
+- [Settings: 4 Files, 5 Precedence Levels](phases/04-claude-code/34-settings-and-precedence.html) — Arrays merge, scalars replace.
+- [Plan Mode and Checkpoints](phases/04-claude-code/35-plan-mode-and-checkpoints.html) — Plan mode is a permission context, not a different model.
+- [Checkpointing, /rewind, Recovery](phases/04-claude-code/36-checkpointing-rewind-recovery.html) — The undo for a multi-step tool session.
+- [Troubleshooting: Reading Errors Properly](phases/04-claude-code/37-troubleshooting-reading-errors-properly.html) — Most "the tool is broken" reports are "I did not read the error."
+
+## Phases 5–18
+
+See [catalog.html](catalog.html) for the full phase list. Phases 05–18 cover skills, subagents, MCP, hooks, plugins, memory, parallelism, context engineering, harness engineering, graph engineering, worktrees in practice, scaling, and the capstone.
+
+## Plugin surface (for agents)
+
+- Streamable HTTP MCP at `/mcp` — tools: `search_curriculum`, `read_resource` (read-only)
+- REST API: `/api/v1/catalog`, `/api/v1/resource?path=…`, `/api/v1/markdown?path=…`
+- OpenAPI: `/openapi.json`
+- MCP manifest: `/server.json` (also `/.well-known/mcp.json`)
+- Content negotiation: `Accept: text/markdown` on any page returns the markdown twin
+- All routes are static; no auth, no accounts, no write endpoints
+- Quotas: 120 req/min/IP per function instance, advertised via `RateLimit-Policy` headers

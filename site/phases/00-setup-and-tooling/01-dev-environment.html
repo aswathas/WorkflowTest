@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev Environment — Harnessing Claude Code</title>
+<meta name="description" content="After this lesson your terminal, editor and shell are configured the way this">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav>
+      <a href="../../catalog.html">← Catalog</a>
+    </nav>
+  </div>
+</header>
+
+<article class="lesson-article">
+  <p class="lesson-meta-tag">BUILD</p>
+  <h1>Dev Environment</h1>
+  <p class="lesson-motto">After this lesson your terminal, editor and shell are configured the way this</p>
+
+  <div class="lesson-meta-block">
+    <p><strong>Type:</strong> Build</p>
+    <p><strong>Prerequisites:</strong> none — first lesson in the course</p>
+    <p><strong>Time:</strong> ~30 minutes</p>
+  </div>
+
+  <div class="ascii-rule"></div>
+
+  <pre style="white-space:pre-wrap;font-family:var(--font-body);font-size:1rem;line-height:1.62;background:transparent;border:0;padding:0;">## Learning Objectives
+
+- Set a shell that keeps your working directory and shows which git branch you are on
+- Point your editor at a line of output you were given, without hunting for it
+- Create the throwaway repo this course will break on purpose, and confirm it is a git repo
+- Name the three places a command can run, and say which one an agent uses
+
+---
+
+## The Problem
+
+Two hours into your first session you ask an agent to change one file. It reports
+success. Nothing changed. The file it edited was in a different folder than the
+one you are looking at — and you have no way to tell, because your terminal shows
+a bare prompt with no path in it.
+
+That is the whole problem. Not the tooling. **Not knowing which folder you are
+in.** Everything this course builds later — sending several agents at once,
+isolating their work, merging it back — assumes you can always answer "where am
+I?" without thinking. Get that habit in place now and the rest is mechanical.
+
+---
+
+## The Concept
+
+Three places a command can run. Confusing them is the most common way a session
+goes wrong.
+
+&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
+    A[You type a command] --&amp;gt; B{Which shell?}
+    B --&amp;gt;|your terminal| C[Your machine, your folders]
+    B --&amp;gt;|the agent's shell| D[The same machine, the session's working folder]
+    B --&amp;gt;|a server elsewhere| E[Not your files at all]
+    D -.-&amp;gt; F[Both usually agree — until one of them changes folder]&lt;/pre&gt;&lt;/div&gt;
+
+The middle row is the one that surprises people. The agent does not get a
+special machine. It runs commands **in a specific folder**, and that folder was
+decided when the session started. It is not re-decided every time you talk to it.
+
+So two habits cover most of it:
+
+1. **Your prompt shows the folder.** A path and a branch, always visible.
+2. **You say the folder once, at the start.** "We're working in
+   `~/projects/my-app`." Then you never think about it again.
+
+&gt; **The reframe:** the working folder is set once, at session start, and never
+&gt; moves — so verifying it once is worth more than being careful forever.
+
+### What "set up" actually means
+
+Not a theme. Not a font. Four things, in this order:
+
+| # | Thing | Why this course needs it |
+|---|---|---|
+| 1 | Git installed and configured | Every later phase leans on it |
+| 2 | A shell prompt showing path + branch | You must never be unsure where you are |
+| 3 | An editor you can drive from the terminal | Reading a diff without leaving the keyboard |
+| 4 | A throwaway repo to experiment on | Practice modules break things on purpose |
+
+---
+
+## Build It
+
+Do these in order. Each step ends with something you can look at.
+
+### 1. Check git, and set who you are
+
+```bash
+git --version
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
+Without those two `config` lines every commit in this course fails, and the error
+message does not explain why.
+
+✅ You pass when `git --version` prints a version and both config lines are set.
+
+### 2. Make your prompt show path and branch
+
+Append one line to your shell profile. Bash and zsh differ; use the one that
+matches what you actually run.
+
+```bash
+# zsh (~/.zshrc) or bash (~/.bashrc)
+PS1='$(git branch --show-current 2&gt;/dev/null || echo "no-repo") %c $ '
+```
+
+Then reload it and move into any git repo.
+
+```bash
+source ~/.zshrc    # or ~/.bashrc
+cd ~/.claude       # any repo you have
+```
+
+Your prompt should now read something like `main ~ $`.
+
+✅ You pass when your prompt shows a branch name while you are in a repo.
+
+### 3. Open a file at a given line from the terminal
+
+```bash
+# macOS / Linux
+code path/to/file.ts:42
+
+# Windows PowerShell
+code path\to\file.ts:42
+```
+
+Add the alias so you never retype it:
+
+```bash
+alias c='code'     # add to the same profile
+```
+
+✅ You pass when the editor opens with the cursor on line 42.
+
+### 4. Create the practice repo
+
+This is the repo the Break modules will destroy on purpose. Make it boring and
+disposable.
+
+```bash
+mkdir -p ~/claude-course-lab
+cd ~/claude-course-lab
+git init
+mkdir -p src
+printf 'export const sum = (a, b) =&gt; a + b\n' &gt; src/index.ts
+git add -A
+git commit -m "chore: start the lab"
+git log --oneline
+```
+
+✅ You pass when `git log --oneline` shows exactly one commit.
+
+### 5. Prove you know where you are
+
+```bash
+pwd
+git rev-parse --show-toplevel
+```
+
+These two should agree, and the second should be your lab folder. If they ever
+disagree later in the course, stop and fix that before continuing — every
+confusing thing downstream traces back to it.
+
+✅ You pass when both print the same folder.
+
+---
+
+## Use It
+
+| Command / concept | When you reach for it |
+|---|---|
+| `pwd` | Any time you are not sure what folder you are in |
+| `git rev-parse --show-toplevel` | Finding the repo root, not the current subfolder |
+| `code file:line` | Jumping to an error the agent quoted at you |
+| `git init` | Starting a throwaway repo to experiment in |
+| `git config --global user.email` | Once per machine, before your first commit |
+| `cd -` | Returning to the folder you were just in |
+
+---
+
+## Exercises
+
+1. Make a folder, `git init` it, make one commit, then `cd` somewhere else and
+   recover your position with `git rev-parse --show-toplevel` alone — without
+   typing the full path.
+   ✅ You pass when you print the lab folder path from a different directory.
+
+2. Create a file with 60 lines, then open it at line 57 from the terminal in one
+   command.
+   ✅ You pass when the editor lands on line 57 without you scrolling.
+
+3. Open a brand-new terminal tab and check your prompt. Does it show a branch?
+   If not, your profile edit did not take.
+   ✅ You pass when a fresh tab shows a branch name while you are inside the lab repo.
+
+---
+
+## Key Terms
+
+| Term | What people say | What it actually means |
+|---|---|---|
+| working directory | "the project folder" | One specific folder a command runs in. Not a default. Not negotiable per command. |
+| repo root | "wherever I ran git init" | The top folder of the repo, found with `git rev-parse --show-toplevel`. Subfolders are inside it but are not it. |
+| git config | "git settings" | Identity and defaults, stored per-machine globally and per-repo locally. Without identity, commits fail. |
+| prompt | "the thing with the cursor" | The text your shell prints before each command. Make it carry path and branch, and you stop needing to check. |
+
+---
+
+## What this lesson skipped
+
+No shell scripting, no aliases beyond the two above, no terminal multiplexers.
+No git concepts beyond "a repo exists and one commit happened" — branches,
+merging and recovery are Phase 02, and this lesson must not lean on them.
+
+One warning, because it has already bitten us: **run `git init` before you start
+a session, not during one.** A session that begins outside a repo will not pick
+up a repo created later, and every tool that assumes a repo will fail with a
+message that does not explain why. Restart your session in an existing repo
+instead.</pre>
+</article>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Harnessing Claude Code — public read API",
+    "version": "1.0.0",
+    "description": "Read-only access to the course catalog, individual lessons, and machine-readable twin pages. No auth, no write endpoints, no accounts."
+  },
+  "servers": [
+    { "url": "https://harnessing.example", "description": "production" },
+    { "url": "http://localhost:8000", "description": "local dev" }
+  ],
+  "paths": {
+    "/api/v1/catalog": {
+      "get": {
+        "summary": "Search the lesson catalog",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Free-text query" },
+          { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["Learn", "Build"] } },
+          { "name": "phase", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "maximum": 100 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lesson list",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LessonList" } } }
+          },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/api/v1/resource": {
+      "get": {
+        "summary": "Get the markdown source of a lesson",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" }, "description": "phases/NN-phase/NN-slug" },
+          { "name": "lang", "in": "query", "schema": { "type": "string", "default": "en" } }
+        ],
+        "responses": {
+          "200": { "description": "Lesson markdown", "content": { "text/markdown": { "schema": { "type": "string" } } } },
+          "404": { "description": "Lesson not found" }
+        }
+      }
+    },
+    "/api/v1/markdown": {
+      "get": {
+        "summary": "Get the markdown twin of any page",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Markdown", "content": { "text/markdown": { "schema": { "type": "string" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Lesson": {
+        "type": "object",
+        "required": ["path", "title", "type", "prerequisites", "time"],
+        "properties": {
+          "path": { "type": "string", "description": "phases/NN-phase/NN-slug" },
+          "title": { "type": "string" },
+          "type": { "type": "string", "enum": ["Learn", "Build"] },
+          "prerequisites": { "type": "string" },
+          "time": { "type": "string" },
+          "ground": { "type": "string", "description": "What this lesson establishes" }
+        }
+      },
+      "LessonList": {
+        "type": "object",
+        "required": ["total", "items"],
+        "properties": {
+          "total": { "type": "integer" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Lesson" } }
+        }
+      }
+    },
+    "responses": {
+      "RateLimited": {
+        "description": "Rate-limited; 120 req/min/IP",
+        "headers": {
+          "RateLimit-Policy": { "schema": { "type": "string" } },
+          "RateLimit": { "schema": { "type": "string" } },
+          "Retry-After": { "schema": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

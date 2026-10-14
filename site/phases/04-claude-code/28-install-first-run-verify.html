@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 28: Install, First Run, Verify — Harnessing Claude Code</title>
+<meta name="description" content="Read the file README.md and tell me the first line.">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav>
+      <a href="../../catalog.html">← Catalog</a>
+    </nav>
+  </div>
+</header>
+
+<article class="lesson-article">
+  <p class="lesson-meta-tag">LESSON</p>
+  <h1>Lesson 28: Install, First Run, Verify</h1>
+  <p class="lesson-motto">Read the file README.md and tell me the first line.</p>
+
+  <div class="lesson-meta-block">
+    <p><strong>Type:</strong> —</p>
+    <p><strong>Prerequisites:</strong> —</p>
+    <p><strong>Time:</strong> —</p>
+  </div>
+
+  <div class="ascii-rule"></div>
+
+  <pre style="white-space:pre-wrap;font-family:var(--font-body);font-size:1rem;line-height:1.62;background:transparent;border:0;padding:0;">## Use It
+
+| Action | Command | Notes |
+|---|---|---|
+| Install | the official command for your platform from the docs | One line. Pick the one for YOUR OS. |
+| Update | the official update command for your platform | Run when a new version ships. |
+| Uninstall | the official uninstall command for your platform | Reversible. You can reinstall. |
+| Exit a session | `/exit` | From inside Claude Code. |
+| Check the install | `./scripts/setup-check.sh` | From your project root. The `claude` line should not read `MISS`. |
+
+## Exercises
+
+**Exercise 1 — Install and launch.**
+Run the install command for your platform. Launch Claude Code. Exit with `/exit`.
+
+Pass: you end back at your shell prompt with no error message in the transcript.
+
+**Exercise 2 — Verify it actually reads a file.**
+From a directory that contains a file you know (e.g. `README.md`), launch Claude Code and ask it to read the file and report one fact about it.
+
+Pass: the tool reports a fact that matches the file's actual content. A shim cannot do this.
+
+**Exercise 3 — Confirm via setup-check.sh.**
+Run `./scripts/setup-check.sh` from your project root.
+
+Pass: the `claude` entry reports `ok` (or your script's equivalent of "real binary"). It must not report `MISS` or `shim`.
+
+## Key Terms
+
+**Installed.** What people say: "the install command finished without an error." What it actually means: the binary exists *and* it can read a file *and* it responds to an instruction. The first alone is not enough.
+
+**PATH.** What people say: "it's on PATH, so it works." What it actually means: the shell can find a file by that name. That file might be a working binary, an old binary, or a shim. PATH is a lookup mechanism, not a correctness guarantee.
+
+**Verification.** What people say: "I checked it runs." What it actually means: you asked the tool to do a task it cannot fake. For Claude Code the floor is: read a file you named and report something true about it.
+
+**Shim.** What people say: "a placeholder for the real thing." What it actually means here: a script or binary on PATH that imitates the real tool enough to fool a presence check. The Phase 00 setup-check.sh was written to catch exactly this.
+
+## What this lesson skipped
+
+Custom configuration (model selection, paid plans, default settings) — Lesson 29. The full introduction to slash commands beyond `/exit` — Lesson 30. The first real "give Claude a goal and let it work" session — Lesson 31.
+</pre>
+</article>
+</body>
+</html>

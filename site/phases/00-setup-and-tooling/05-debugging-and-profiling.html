@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Debugging and Profiling — Harnessing Claude Code</title>
+<meta name="description" content="When the agent goes wrong, the agent is rarely the cause. The environment is.">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav>
+      <a href="../../catalog.html">← Catalog</a>
+    </nav>
+  </div>
+</header>
+
+<article class="lesson-article">
+  <p class="lesson-meta-tag">LEARN</p>
+  <h1>Debugging and Profiling</h1>
+  <p class="lesson-motto">When the agent goes wrong, the agent is rarely the cause. The environment is.</p>
+
+  <div class="lesson-meta-block">
+    <p><strong>Type:</strong> Learn</p>
+    <p><strong>Prerequisites:</strong> Lesson 1 (Dev Environment)</p>
+    <p><strong>Time:</strong> ~30 minutes</p>
+  </div>
+
+  <div class="ascii-rule"></div>
+
+  <pre style="white-space:pre-wrap;font-family:var(--font-body);font-size:1rem;line-height:1.62;background:transparent;border:0;padding:0;">## Learning Objectives
+
+By the end of this lesson you can:
+
+- Name three categories of "agent problem" that turn out to be environment problems
+- Read a slow run to find the actual hot step, instead of guessing where it spends time
+- Isolate a failure to one variable by changing one thing at a time
+- Distinguish "the model was wrong" from "the model was given wrong inputs"
+
+## The Problem
+
+You ask the agent to do a task. It does it badly. You ask again. It does it badly in a different way. After the third try you conclude: "the agent is bad at this."
+
+Most of the time, no. The model did what the inputs told it to do. The failure was upstream: a wrong folder, a stale dependency, a missing env var, a slow script you never measured. The agent inherited a broken environment and produced a broken result. Calling that "an agent problem" is the most expensive mistake in this course.
+
+Three habits close most of that gap. This lesson teaches them.
+
+## The Concept
+
+**The reframe:** Most agent problems are not agent problems. They are environment problems. Reading errors, profiling a slow run, and isolating a failure to one variable are the skills that turn an hour of guessing into a minute of looking.
+
+The rest of this lesson is those three skills. They are not agent-specific. They are the same skills you would use debugging any program. The reason they matter here is that with an agent, the temptation to skip them is strong — you can always say "try again" and let the model iterate. Sometimes that works. Often it loops on the same upstream cause and burns your time and tokens.
+
+### The three categories of "not the agent"
+
+When a session goes wrong, place the cause in one of three boxes. Most sessions end with the cause in box 1.
+
+&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
+    A[Session goes wrong] --&amp;gt; B{Where is the cause?}
+    B --&amp;gt;|Environment wrong| C[wrong folder, missing key,&amp;lt;br/&amp;gt;stale cache, bad version]
+    B --&amp;gt;|Inputs wrong| D[bad prompt, missing context,&amp;lt;br/&amp;gt;ambiguous spec, stale file]
+    B --&amp;gt;|Model wrong| E[actually the model,&amp;lt;br/&amp;gt;rare but real]
+    C -.-&amp;gt;|fix once| F[session works]
+    D -.-&amp;gt;|rewrite the request| F
+    E -.-&amp;gt;|change model or task| F&lt;/pre&gt;&lt;/div&gt;
+
+**Box 1: environment.** The folder is wrong. The API key is missing. A cached build is stale. A dependency is one version off. These never fix themselves by retrying the prompt.
+
+**Box 2: inputs.** The prompt is vague. The context the agent sees is out of date. The spec is ambiguous. These fix themselves by writing a better prompt, not by asking the model to try harder.
+
+**Box 3: the model.** Rarely. The model genuinely does not have the capability. When it is box 3, no amount of prompt rewriting will help; you need a different model or a different task.
+
+The skill is moving the cause down the funnel. Most of your time is in box 1.
+
+## Build It
+
+The work is three short exercises against your own dev environment. Do them in order. Each takes a few minutes.
+
+### Exercise 1: Prove the folder before blaming the agent
+
+Open a fresh session. Ask the agent to list files in the current directory. It will print a list. Now run `pwd` from your terminal yourself. Compare.
+
+If the two folders disagree, every subsequent thing the agent says is suspect. The fix is not "retry the prompt." The fix is `cd` to the right place, restart the session, and try again.
+
+Pass: in one sentence, you can say whether the agent's working folder matched yours, and what you would do if they did not match.
+
+### Exercise 2: Read a slow run
+
+Pick any task that took longer than you expected — a build, a test suite, a model call, an install. Have it run while you watch the timestamps.
+
+Three readings:
+
+1. **Total wall time.** How long it actually took. Round number, not a guess.
+2. **Per-step time.** Which step took the most. Often a single step accounts for most of the wall.
+3. **What you assumed vs what happened.** Did the slow step match what you thought would be slow? Usually no.
+
+If the slow step is a model call, count the calls. A loop of 30 model calls at 3 seconds each is a 90-second session that you thought was one task.
+
+Pass: you can name the slowest step and how long it took, in seconds.
+
+### Exercise 3: Isolate one variable
+
+Take a task that "sometimes works." Reproduce it twice. Each time, change exactly one thing. Examples of "one thing": a different folder, a different env var value, a different file content, a different prompt. If the result changes between run 1 and run 2, the thing you changed is in the causal path. If it does not, it is not — keep it out of the picture.
+
+Two-run isolation beats five-run guessing. After two runs you know the cause is or is not in the variable you changed.
+
+Pass: for a flaky behavior, you can name one variable whose change flipped the result, and one variable whose change did not.
+
+## Use It
+
+| Situation | First thing to check | Why |
+|---|---|---|
+| Agent "doesn't understand" the task | Read the prompt you sent. Was it specific? | Vague prompts look like model failures but are input failures |
+| Agent edits the wrong file | Compare `pwd` in your shell to the agent's reported folder | Almost always a working-directory mismatch |
+| Session feels slow | Time it. Count model calls. Find the actual hot step | Most slowness is one step, not the whole run |
+| Agent "hallucinates" an API that does not exist | Read the error it got back. Was the API call ever made? | A wrong import can look like a model error |
+| Same prompt gives different results each run | Isolate one variable. What changed since last time? | Non-determinism is real; isolating it makes it visible |
+| You have tried the same prompt five times | Stop. Re-read the prompt. The cause is in the prompt, not the model | After three tries, the model has converged. New attempts are noise |
+| Output is wrong but plausible | Re-read the source files the agent had access to | Stale context is a common cause of plausible-wrong answers |
+| The tool returned an error | Read the first and last lines of the error | The middle is context; the edges are the statement |
+
+## Exercises
+
+1. **Classify a real failure.**
+   Take any past session that ended badly — your own, or one you remember. Classify it into box 1, 2, or 3. Be honest.
+   Pass: you can defend the classification in two sentences, naming the specific evidence that placed it.
+
+2. **Profile a real run.**
+   Run any agent task end-to-end while watching timestamps. Record the wall time and the slowest step's time.
+   Pass: in a single sentence you can say "total time was X, the slow step was Y at Z seconds."
+
+3. **Two-run isolation.**
+   Find something flaky. Run it twice, changing exactly one variable. State which variable was in the causal path.
+   Pass: you can name the one variable whose change correlated with the outcome change, and at least one variable whose change did not.
+
+4. **Catch yourself guessing.**
+   Next time the agent fails, before re-prompting, write down what you believe the cause is. Then read the actual evidence — error text, folder, version, file content. Was your guess right?
+   Pass: at least one of your guesses was wrong, and you can name what the evidence actually said.
+
+## Key Terms
+
+| What people say | What it actually means |
+|---|---|
+| "The agent is bad at this." | Almost never true on the first failure. The agent inherited an environment and ran in it. The misconception is that bad output implies a bad model. It usually implies bad inputs or a bad environment. |
+| "Just retry the prompt." | A retry changes one random thing. If the cause is in the environment, retry changes nothing and burns tokens. Isolate one variable instead. |
+| "It's slow." | Unmeasured. Until you time a step, "slow" is a feeling, not a fact. Profile once. Then you know which step is the hot one. |
+| "The model hallucinated." | Sometimes. Often the model used a stale or wrong input and produced a coherent-looking wrong answer. Plausible-wrong is an input problem. |
+| "It worked yesterday." | Something changed. Find it. Two-run isolation finds changes; guessing does not. |
+| "Reproducible." | Means: same inputs, same outputs. To prove it, change one variable and see if the output changes. If yes, the variable is in the causal path. |
+
+## What this lesson skipped
+
+No debugger attach. No flame graphs. No language-specific profilers. No agent-specific tracing tools. The lesson stayed at the level of "read the error, time the step, change one thing." Those three habits cover most of what goes wrong in a session and require no special tooling.
+
+We also skipped the question "when is the model actually the problem?" That is real and rare; the lesson's claim is that it is rare, not that it never happens. When three retries and a clean environment still fail, the model may be the cause. Change the model, or change the task.
+
+Skipped: how to write a good failure report for a human reviewer. That is its own lesson.
+</pre>
+</article>
+</body>
+</html>

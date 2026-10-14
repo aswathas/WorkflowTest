@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Developer / API — Harnessing Claude Code</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="logo" href="/">■ HARNESSING CLAUDE CODE</a>
+    <nav>
+      <a href="catalog.html">Catalog</a>
+      <a href="prereqs.html">Roadmap</a>
+      <a href="glossary.html">Glossary</a>
+      <a href="about.html">About</a>
+      <a href="llms.txt">llms.txt</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <article class="lesson-article">
+    <p class="lesson-meta-tag">DEVELOPER / API</p>
+    <h1>Read-only access for AI agents</h1>
+    <p class="lesson-motto">The course is a resource. The site is its access surface. No auth, no accounts, no write endpoints — just three ways for an agent to read it.</p>
+
+    <h2>1. llms.txt</h2>
+    <p>The fastest way in. A plain-text index of every lesson, one URL per line. Point an agent at <a href="llms.txt">/llms.txt</a> and it can decide what to read.</p>
+    <pre><code>GET /llms.txt</code></pre>
+
+    <h2>2. REST API</h2>
+    <p>Search the catalog, fetch lesson markdown, fetch any page as markdown. Three endpoints, all GET, all public.</p>
+    <pre><code>GET /api/v1/catalog?q=worktree&amp;limit=10
+GET /api/v1/resource?path=phases/00-setup-and-tooling/01-dev-environment
+GET /api/v1/markdown?path=/catalog</code></pre>
+    <p>Typed specification: <a href="openapi.json">/openapi.json</a>.</p>
+
+    <h2>3. MCP server</h2>
+    <p>Streamable HTTP at <code>/mcp</code>. Two tools, both read-only:</p>
+    <table>
+      <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>search_curriculum</code></td><td>Search lessons by query, kind, or phase</td></tr>
+        <tr><td><code>read_resource</code></td><td>Fetch a lesson's markdown by path</td></tr>
+      </tbody>
+    </table>
+    <p>Manifest: <a href="server.json">/server.json</a> (also served at <code>/.well-known/mcp.json</code>).</p>
+
+    <h2>Content negotiation</h2>
+    <p>Every page on this site has a markdown twin. Add <code>Accept: text/markdown</code> and the server returns markdown. Example:</p>
+    <pre><code>curl -H "Accept: text/markdown" https://harnessing.example/about
+# returns the about page as markdown</code></pre>
+
+    <h2>Limits</h2>
+    <ul>
+      <li>120 requests/minute/IP per endpoint</li>
+      <li>No authentication — public read-only</li>
+      <li>No CORS restrictions on the API surface (lessons are public, agents are the audience)</li>
+      <li>All routes serve both HTML and markdown</li>
+    </ul>
+
+    <h2>Errors</h2>
+    <p>RFC 9457 problem details with stable <code>code</code>, explanatory <code>detail</code>, and recovery <code>hint</code>. Real 404s, not HTML error pages.</p>
+
+    <h2>Lessons as files</h2>
+    <p>Every lesson is also a markdown file on disk at the canonical path:</p>
+    <pre><code>phases/NN-phase-slug/NN-lesson-slug/docs/en.md</code></pre>
+    <p>You can read lessons directly from the source repo, with no API in the way. The API exists for the cases where you want filtering, search, or a single source of truth.</p>
+  </article>
+</main>
+</body>
+</html>

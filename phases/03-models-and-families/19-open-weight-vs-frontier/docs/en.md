@@ -64,7 +64,12 @@ flowchart LR
 
 You will install one small open-weight model, ask it a question, then ask the same question of a frontier API, and compare.
 
-1. Install a runtime that runs models locally. One option is `llama.cpp` from `github.com/ggerganov/llama.cpp`. Another is `ollama` from `ollama.com`. Pick one and follow its install steps.
+1. Install a runtime that runs models locally. Three common options:
+   - `ollama` from `ollama.com` — easiest install, one-command model pull
+   - `llama.cpp` from `github.com/ggerganov/llama.cpp` — lower-level, more control
+   - `opencode` from `opencode.ai` — a coding-agent CLI that takes any open-weight model as its backend (you point it at a local runtime like Ollama or any OpenAI-compatible endpoint)
+
+   Pick one and follow its install steps.
 
 2. Pull a small chat model. Example (may need updating):
 
@@ -72,7 +77,7 @@ You will install one small open-weight model, ask it a question, then ask the sa
    ollama run qwen2.5:3b
    ```
 
-   A small open-weight chat model such as Qwen-2.5-3B-Instruct (about 2 GB, fits on most laptops). If that exact tag has changed, the runtime's model library will show the current small option.
+   A small open-weight chat model such as Qwen-2.5-3B-Instruct (about 2 GB, fits on most laptops). If that exact tag has changed, the runtime's model library will show the current small option. Another well-known family in the same tier is DeepSeek (e.g. `ollama run deepseek-r1:1.5b`, or pointing OpenCode at a `deepseek-coder` / `deepseek-r1` tag on a local Ollama instance); either one gives the lesson the same lesson — that the weights are a local file and the call has no per-token bill, regardless of which runtime drives the model.
 
 3. Ask it a question. Try:
 
