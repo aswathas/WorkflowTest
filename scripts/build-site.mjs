@@ -300,8 +300,14 @@ const NAV = [
   ['llms.txt', 'llms.txt'],
 ];
 
-// Runs before paint so a dark OS preference does not flash light.
-const THEME_SCRIPT = `<script>(function(){var k='hcc-theme',d=document.documentElement;try{var t=localStorage.getItem(k)||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');if(t==='dark')d.dataset.theme='dark';}catch(e){}window.addEventListener('DOMContentLoaded',function(){var b=document.querySelector('[data-theme-toggle]');if(!b)return;b.addEventListener('click',function(){var dark=d.dataset.theme!=='dark';if(dark)d.dataset.theme='dark';else d.removeAttribute('data-theme');try{localStorage.setItem(k,dark?'dark':'light');}catch(e){}});});})();</script>`;
+// Runs before paint so a dark OS preference does not flash light. A ?theme=
+// param wins over everything, which makes a specific theme shareable by link
+// and screenshot-able without touching system settings.
+const THEME_SCRIPT = `<script>(function(){var k='hcc-theme',d=document.documentElement;
+try{var q=new URLSearchParams(location.search).get('theme');
+var t=q||localStorage.getItem(k)||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');
+if(t==='dark')d.dataset.theme='dark';}catch(e){}
+window.addEventListener('DOMContentLoaded',function(){var b=document.querySelector('[data-theme-toggle]');if(!b)return;b.addEventListener('click',function(){var dark=d.dataset.theme!=='dark';if(dark)d.dataset.theme='dark';else d.removeAttribute('data-theme');try{localStorage.setItem(k,dark?'dark':'light');}catch(e){}});});})();</script>`;
 
 /** depth = how many directories below site/ this page lives. */
 function head(title, depth, description = '') {
