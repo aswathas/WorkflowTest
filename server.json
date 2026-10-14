@@ -1,0 +1,39 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/registry/manifest.json",
+  "name": "harnessing-claude-code",
+  "version": "1.0.0",
+  "description": "Read-only access to the Harnessing Claude Code course catalog and lessons. No auth, no write endpoints.",
+  "transport": {
+    "type": "streamable-http",
+    "url": "https://harnessing.example/mcp"
+  },
+  "tools": [
+    {
+      "name": "search_curriculum",
+      "description": "Search lessons by free-text query, kind, or phase. Returns matching lesson paths with titles.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "q": { "type": "string", "description": "Free-text query" },
+          "kind": { "type": "string", "enum": ["Learn", "Build"] },
+          "phase": { "type": "string" },
+          "limit": { "type": "integer", "default": 20, "maximum": 100 }
+        }
+      },
+      "annotations": { "read_only": true }
+    },
+    {
+      "name": "read_resource",
+      "description": "Get the markdown source of a lesson by path. Read-only.",
+      "input_schema": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "phases/NN-phase/NN-slug" },
+          "lang": { "type": "string", "default": "en" }
+        }
+      },
+      "annotations": { "read_only": true }
+    }
+  ]
+}
