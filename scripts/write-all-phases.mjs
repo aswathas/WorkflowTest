@@ -19,11 +19,13 @@ const CONCURRENCY = ci === -1 ? 4 : Number(argv[ci + 1]);
 const git = (...args) =>
   spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', shell: true });
 
-// A phase whose lessons and module already validate is done. Re-running a worker
-// on it costs a session and can only make the text worse.
+// A phase whose lessons are still template skeletons is unwritten. Validating
+// alone isn't enough: the validator passes skeletons, which is exactly how 118
+// unwritten lessons sat in the tree looking finished.
 const authored = (phase) =>
-  spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-lessons.mjs'), phase],
-    { cwd: ROOT, encoding: 'utf8', shell: true }).status === 0;
+  !spawnSync('git', ['grep', '-lq', 'Skeleton. `/write-lesson`', '--', `phases/${phase}`], {
+    cwd: ROOT, encoding: 'utf8', shell: true,
+  }).stdout.trim();
 
 const phases = readdirSync(join(ROOT, 'phases'))
   .sort()
@@ -45,7 +47,7 @@ async function author(phase) {
     const child = spawn(
       process.execPath,
       [join(ROOT, 'scripts', 'write-phase.mjs'), phase],
-      { cwd: dir, stdio: 'inherit', shell: true },
+      { cwd: dir, stdio: 'inherit', shell: false },
     );
     child.on('close', resolve);
   });

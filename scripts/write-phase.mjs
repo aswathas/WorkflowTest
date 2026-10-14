@@ -12,7 +12,10 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+// cwd IS the worktree this worker owns. The prompt must name *that* path, not
+// the main checkout — an absolute path pointing at main makes every worker
+// overwrite every other worker's files. That collision cost one phase of work.
+const ROOT = process.cwd();
 const phase = process.argv[2];
 if (!phase) {
   console.error('usage: node scripts/write-phase.mjs <phase-slug>');
@@ -26,7 +29,12 @@ if (!existsSync(PHASES_DIR)) {
 }
 
 const PROMPT = `
-You are authoring lessons for a curriculum repo at ${ROOT}.
+You are authoring lessons for a curriculum repo. Your working directory is
+${ROOT} — a git worktree you own exclusively.
+
+**Only write inside that directory.** Do not touch any other checkout. Every
+other worker has its own worktree and every merge conflict you cause gets
+hand-fixed.
 
 ## Your assignment
 
@@ -96,15 +104,27 @@ git add -A phases/${phase} practice
 git commit -m "feat(${phase}): author lesson bodies"
 \`\`
 
-Work in your assigned worktree directory, not the main checkout. A session
-that ends without a commit loses all of its work. Do not push; do not merge.
+Work inside ${ROOT}. A session that ends without a commit loses all of its work.
+Do not push; do not merge; do not touch git refs other than your own branch.
 `;
 
+// Absolute path, no shell: on Windows the CLI lives under "C:\Program Files\...",
+// and shell:true makes cmd split that on the space and fail for every worker.
 // Prompt goes on stdin: passing it as an argv string loses it to shell quoting.
+// acceptEdits blocks Bash, and a worker that can't `git commit` returns with
+// nothing — isolation without a commit is not a backup.
+const CLAUDE = process.env.CLAUDE_BIN || 'C:/Users/aswat/.local/bin/claude.exe';
 const res = spawnSync(
-  'claude',
-  ['-p', '--permission-mode', 'acceptEdits', '--model', 'sonnet', '--max-turns', '200'],
-  { cwd: process.cwd(), stdio: ['pipe', 'inherit', 'inherit'], input: PROMPT, shell: true },
+  CLAUDE,
+  [
+    '-p',
+    '--permission-mode', 'acceptEdits',
+    '--allowedTools', 'Read,Write,Edit,Glob,Grep,Bash,TodoWrite',
+    '--dangerously-skip-permissions',
+    '--model', 'sonnet',
+    '--max-turns', '300',
+  ],
+  { cwd: process.cwd(), stdio: ['pipe', 'inherit', 'inherit'], input: PROMPT, shell: false },
 );
 
 process.exit(res.status ?? 1);
