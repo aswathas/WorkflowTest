@@ -7,21 +7,47 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Editor Setup that needs a new situation, not recall.",
+      "prompt": "An agent rewrites a function while you have that file open in your editor. You read it, approve it, and add your own change to the same function. Later you cannot find the agent's change. What happened?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "The agent's write failed because the file was locked",
+        "Your buffer was stale, and saving it overwrote the agent's on-disk version",
+        "Git rejected the change as a conflict",
+        "The editor auto-saved the agent's version over yours first"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Your buffer was a copy from before the agent wrote. Saving pushes your copy to disk, and the agent's version — which was never committed — is destroyed. Git cannot help: it only knows about committed states. This is why auto-reload and diff-on-external-change are not optional when working with an agent.",
+      "concept": "buffer-over-disk"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "A repo has `.editorconfig` specifying 4-space indentation. Your personal editor setting says 2 spaces. What happens when you open a file and save it?",
+      "options": [
+        "Your personal setting wins, because editor settings override everything",
+        "It depends which file extension it is",
+        "A warning appears and the save is blocked",
+        "The project's `.editorconfig` wins for files it covers"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 3,
+      "distractors": [0, 1, 2],
+      "explanation": "`.editorconfig` is a shared, checked-in contract that most editors honour over personal defaults for the patterns it covers. Personal settings are your fallback when no project rule exists. This is why you check for it before configuring anything personal.",
+      "concept": "editorconfig-precedence"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Why is format-on-save specifically valuable when reviewing agent-generated code?",
+      "options": [
+        "It makes the agent's code more correct",
+        "It makes the code faster to execute",
+        "It normalizes whitespace before the diff is created, so the diff shows logic changes rather than formatting noise",
+        "It prevents the editor's buffer from going stale"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "It changes nothing about correctness, performance, or staleness. Its whole value is review quality: whitespace noise hides real changes in a diff, and a reviewer's attention is the scarce resource. An agent that reformatted forty files would otherwise produce a diff that is unreadable.",
+      "concept": "diff-signal"
     }
   ]
 }

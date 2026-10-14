@@ -2,26 +2,52 @@
   "lesson": "00-setup-and-tooling/03-terminal-and-shell",
   "title": "Terminal & Shell",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Terminal & Shell that needs a new situation, not recall.",
+      "prompt": "A build prints its real errors to stderr. `npm test | grep FAIL` finds nothing, but the errors are clearly visible when you scroll. Why?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "grep only works on stdout",
+        "npm writes errors to stderr, and a pipe carries only stdout — you need `2>&1`",
+        "The pipe was too fast and grep missed the lines",
+        "grep is case-sensitive by default"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Two separate streams leave every program. `|` wires stdout only, so stderr went straight to your screen and never reached grep. `npm test 2>&1 | grep FAIL` folds stderr into stdout first. Option D is a real gotcha (`grep -i` fixes it) but it isn't why you saw nothing.",
+      "concept": "pipe-stderr"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You need to run a 10-minute migration, and you must close your terminal for a meeting and reconnect afterwards without killing it. Which is right?",
+      "options": [
+        "`migration.sh > log.txt &` — the ampersand detaches it from the shell",
+        "`migration.sh > log.txt` — redirecting output already detaches it",
+        "`tmux new -s migrate`, run it inside, then detach with Ctrl-b d and reattach later",
+        "Leave the terminal open and lock the screen"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "A backgrounded job is still a child of your shell; closing the shell sends it a hangup. Only tmux (or nohup/disown combined with the right conditions) survives a closed window. The ampersand and `>` solve *your attention*, not the terminal's lifetime.",
+      "concept": "detach-long-job"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Why does `echo hi | cd src` leave you in the same directory, but `(cd src && pwd)` prints the src path?",
+      "options": [
+        "`cd` is not a real command and only works inside parentheses",
+        "The left side of a pipe runs in a subshell whose `cd` is discarded on exit; parentheses create one you can use deliberately",
+        "The pipe runs too fast for `cd` to take effect",
+        "Pipes always reset the working directory before running"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "`cd` changes the shell's own state, and a piped command runs in a child subshell — its directory change dies with it. Parentheses are how you ask for exactly that behaviour when you want it: the cd applies inside, and vanishes after. Option C is wrong; it is not timing.",
+      "concept": "subshell-cd"
     }
   ]
 }

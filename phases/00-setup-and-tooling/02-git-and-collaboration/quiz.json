@@ -1,27 +1,53 @@
 {
   "lesson": "00-setup-and-tooling/02-git-and-collaboration",
-  "title": "Git & Collaboration ← your safety net, not optional",
+  "title": "Git & Collaboration",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Git & Collaboration ← your safety net, not optional that needs a new situation, not recall.",
+      "prompt": "Three agents work in three separate folders, each on its own branch. At the end you find every branch pointing at the same original commit and nothing to merge. All three folders still contain good work. What actually went wrong?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "The branches were created from the wrong base ref",
+        "The agents never committed, so the branches have no commits of their own",
+        "Git does not allow three branches from one starting point",
+        "The folders need to be git submodules to contribute commits"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A branch is only a label; the work lives in commits. Files edited in a working tree but never committed belong to no branch — so the branches all still point at the shared starting commit. This is the exact failure this repo hit on 2026-10-14. The rule: always instruct an agent to commit.",
+      "concept": "isolation-without-commit"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You overwrote a file with garbage and you never committed the good version. What can git actually do for you here?",
+      "options": [
+        "Nothing — uncommitted work is the one thing git cannot bring back",
+        "`git checkout -- file` restores the last committed version",
+        "`git reflog` recovers every line you have ever written",
+        "`git diff` shows the pre-overwrite content and restores it"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "distractors": [1, 2, 3],
+      "explanation": "Git stores commits, not a live history of your working tree. `git checkout -- file` gives you the last *committed* version — which is the garbage-free old version, not the good edit you lost. `git diff` shows current-vs-committed, so it also cannot contain the intermediate good edit. Recovering uncommitted work depends on your editor's local history or the shell's undo, not git.",
+      "concept": "uncommitted-work"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Why does this course teach `git revert` rather than `git reset --hard` for undoing a bad commit?",
+      "options": [
+        "`revert` is faster on large repositories",
+        "`revert` adds a commit that undoes the change, so the mistake stays visible in history instead of vanishing",
+        "`reset --hard` cannot touch a single commit without affecting the branch",
+        "`revert` works on uncommitted changes while `reset` does not"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Revert preserves the record: the bad commit and its undo both appear. That matters especially with agents — you can see which agent introduced a change and why it was undone. Option D reverses the truth: reset works on commits, revert needs a commit to undo.",
+      "concept": "revert-vs-reset"
     }
   ]
 }

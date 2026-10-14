@@ -7,78 +7,47 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Which file has the HIGHEST settings precedence?",
+      "prompt": "You start a session in ~/notes, then `git init` a repo at ~/projects/api and `cd` into it in your own terminal. The agent still edits files under ~/notes. Why?",
       "options": [
-        "~/.claude/settings.json",
-        ".claude/settings.json",
-        ".claude/settings.local.json",
-        "managed-settings.json",
-        "claude --settings"
+        "Git caches the folder a session began in, and only updates after you commit",
+        "The agent's working directory was set when the session started and does not follow your terminal",
+        "The agent cannot edit files outside the folder it was launched from",
+        "`cd` in your terminal is scoped to your terminal, so the agent sees a different prompt"
       ],
-      "answer": 3,
-      "distractors": [0, 1, 2, 4],
-      "explanation": "Precedence runs managed > --settings > project local > project shared > user. Managed is highest because your organization can enforce settings you cannot override locally.",
-      "concept": "settings-precedence"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The working directory is decided once, at session start, and does not move as you talk to the agent. Fix: say the folder explicitly at the start of a session, or restart the session in the repo. Option C sounds right but is wrong — the agent can reach any folder you grant; it simply defaults to the session's folder.",
+      "concept": "working-directory"
     },
     {
       "id": "q2",
       "type": "multiple-choice",
-      "prompt": "You changed ~/.claude/settings.json but nothing happened. What do you run first?",
+      "prompt": "You are deep in a repo at repo/src/components/Button/. Which single command reliably tells you the folder you should report problems against?",
       "options": [
-        "git status",
-        "/status, read Setting sources",
-        "npm install",
-        "claude mcp list"
+        "pwd",
+        "ls",
+        "git rev-parse --show-toplevel",
+        "git status"
       ],
-      "answer": 1,
-      "distractors": [0, 2, 3],
-      "explanation": "/status names which file supplied each value. Nine times in ten the problem is that you edited a layer that lost. Editing the winning layer is faster than guessing.",
-      "concept": "settings-precedence"
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "`git rev-parse --show-toplevel` prints the repo root regardless of how deep you are. `pwd` is right when you want your current subfolder and wrong when you want the project — and it will disagree with the path in a stack trace.",
+      "concept": "repo-root"
     },
     {
       "id": "q3",
       "type": "multiple-choice",
-      "prompt": "What is the recommended maximum length for CLAUDE.md?",
+      "prompt": "A colleague's `git commit` fails with an error mentioning identity. Nothing in the repo looks wrong. What is the actual cause?",
       "options": [
-        "500 lines",
-        "Unlimited if useful",
-        "200 lines",
-        "50 lines"
+        "The repo has no commits yet, so there is nothing to attach a commit to",
+        "The branch has diverged from main",
+        "`user.name` and `user.email` were never configured on that machine",
+        "A file is staged but has never been committed"
       ],
       "answer": 2,
       "distractors": [0, 1, 3],
-      "explanation": "Past 200 lines it stops being instructions and becomes reference material. Move the bulk to a skill and leave a pointer.",
-      "concept": "claude-md"
-    },
-    {
-      "id": "q4",
-      "type": "multiple-choice",
-      "prompt": "Two settings files set the same key. What happens?",
-      "options": [
-        "The lower file wins",
-        "The higher-precedence one wins",
-        "Claude Code merges both into a new file",
-        "Claude Code prompts you to pick"
-      ],
-      "answer": 1,
-      "distractors": [0, 2, 3],
-      "explanation": "The highest-precedence layer that sets the key wins. The subtlety is arrays merge across layers while single values are replaced — see Step 3.",
-      "concept": "settings-precedence"
-    },
-    {
-      "id": "q5",
-      "type": "multiple-choice",
-      "prompt": "What is the reframe this lesson asks you to adopt?",
-      "options": [
-        "The shell is where engineers live",
-        "You are choosing which directory an agent may act inside",
-        "Configuration prevents most agent mistakes",
-        "Environments should be reproducible"
-      ],
-      "answer": 1,
-      "distractors": [0, 2, 3],
-      "explanation": "Every boundary — permissions, isolation, safety — inherits the working directory you launched in. The directory choice is the first and largest one.",
-      "concept": "working-directory"
+      "explanation": "Git refuses to attribute a commit to nobody. The other three are real situations but produce different messages — none of them mention identity.",
+      "concept": "git-config"
     }
   ]
 }
