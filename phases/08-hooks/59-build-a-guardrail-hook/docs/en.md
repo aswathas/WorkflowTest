@@ -74,6 +74,10 @@ introduce a new way to fail.
 and the test asserts the exit code for both. Without it, "is the guardrail
 working?" is a question you answer by pushing and seeing what happens.
 
+> **The reframe:** a guardrail is enforcement only when it blocks the dangerous
+> thing *and* leaves its safe neighbour alone — and the self-test, not the block
+> list, is what tells you which of the two you actually built.
+
 ---
 
 ## Build It
