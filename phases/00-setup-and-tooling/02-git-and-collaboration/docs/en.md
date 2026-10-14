@@ -1,257 +1,180 @@
-# Git & Collaboration ← your safety net, not optional
+# Git as Your Safety Net
 
-> After this lesson you can get any piece of work back with one command, even
-> when an agent deleted it, overwrote it, or went sideways.
+> "The agent just rewrote six files and three of them are broken." — every developer, eventually.
 
 **Type:** Learn
-**Prerequisites:** Lesson 1, Dev Environment
+**Prerequisites:** Lesson 1 (Dev Environment)
 **Time:** ~45 minutes
-
----
 
 ## Learning Objectives
 
-- Explain what a commit actually stores, in one sentence you could say out loud
-- Put work back after deleting a file, overwriting it, or wrecking a directory
-- Recover work that was never committed — the case that surprises everyone
-- Commit on a branch, switch branches, and get back — without fear
+By the end of this lesson, you will be able to:
 
----
+- Describe the four states a file can be in: working tree, staging area, local repository, remote.
+- Move files between these states without fear.
+- Recover lost work using git's history.
+- Set up a remote so a local disaster cannot end the project.
 
 ## The Problem
 
-An agent edits six files. Three are wrong and it did not say which. You revert
-the whole change by reflex and lose two hours of work that was actually good.
+You ask the agent to refactor a function. It edits five files. Three of them no longer compile. The original code is gone — overwritten in place, no backup, no undo button. You stare at the screen and think: "what did it look like before?"
 
-That reflex comes from one belief: **"a commit is a save button that only keeps
-the last thing."** Once you believe a commit is a full snapshot of the whole
-project, the recovery is trivial — and so is the decision not to revert
-everything.
+This is the cost of giving an AI agent write access to your code. The agent is fast. The agent is not always right. When it is wrong, it can destroy work in seconds.
 
-This lesson exists because later phases run several agents at once. Isolation
-without commits is not a backup. We hit exactly that bug here: three agents did
-perfect work in separate folders and none of them committed. All of it lived as
-loose files on disk, one bad command from gone. Nothing to merge, because the
-branches were empty labels pointing at the same commit.
-
----
+If your only safety net is "undo in the editor" or "I remember what I wrote," you are a single bad agent run away from losing a day.
 
 ## The Concept
 
-A commit is a **photograph of your entire project at one moment, with a name you
-chose.**
+Git is not primarily a collaboration tool. For solo work with an AI agent, git's primary job is to be the safety net that lets you move between past and present without fear.
 
-Not a diff. Not a list of edits. The whole tree, frozen.
+**The reframe:** Most people think of git as a way to share code with other developers. For AI-agent work, git is the record of every change an agent has made to your code, plus the ability to roll any of them back. Every later lesson in this course assumes you can recover lost work. That ability lives in git.
+
+A file in a git project lives in one of four states:
+
+1. **Working tree** — the files on disk, as your editor sees them. The agent edits here. Changes in the working tree are not yet saved.
+2. **Staging area** — a snapshot of selected working-tree files, ready to be saved as one unit. This is a holding pen, not a backup.
+3. **Local repository** — the saved history on your machine, stored in a hidden `.git` directory. Once a change is here, it is recoverable. This is the safety net.
+4. **Remote** — a copy of the history on another machine, such as GitHub. This is insurance against losing your laptop.
+
+The flow moves in one direction: working tree to staging area to local repository to remote.
 
 ```mermaid
 flowchart LR
-    A[c1 initial] --> B[c2 phase 00 done]
-    B --> C[c3 lessons 01-05]
-    C --> D[c4 catalog complete]
-    style D fill:#1f6f4a,color:#fff
+    A[Working Tree] -->|git add| B[Staging Area]
+    B -->|git commit| C[Local Repo]
+    C -->|git push| D[Remote]
 ```
 
-You are standing at `c4`. `c3` is still there, one command away, forever. You
-cannot lose work with git. You can lose *time* — which at 2am feels identical,
-and is why the habit matters.
+The key mental shift: every agent run that changes a file should end with a commit. If the change is wrong, you roll back the commit. If the commit is good, you push it to the remote.
 
-> **The reframe:** a commit is not a save button, it is a photograph — and
-> photographs you don't take are the only thing that can actually be lost.
+Three commands you must internalize:
 
-### The two words that cause all the confusion
-
-| Word | What it is | Analogy |
-|---|---|---|
-| working tree | The live folder on disk. Where unsaved edits sit. Fragile. | Your desk |
-| commit | One frozen snapshot in permanent history. | A photograph in a drawer |
-
-An agent editing a file changes the working tree. That is the dangerous state —
-nothing is recorded. A commit is what makes it safe. Everything later in this
-course is a variation on "make it safe before letting go."
-
-### Branches are labels, not copies
-
-A branch is a **movable label pointing at one commit**. Creating one copies
-nothing, costs nothing, takes no time. It is an arrow.
-
-```bash
-git branch feature-a     # instant, regardless of project size
-```
-
-This matters for agents later: spinning up isolated work is cheap, and staying
-*inside* it is your job. Nobody will do it for you.
-
-### The safety rules
-
-Four habits. Every one of them is about making work recoverable.
-
-1. **Commit before you let go.** Before a risky command, before a context
-   switch, before an agent does something large.
-2. **One commit per coherent change.** Not per file, not per session.
-3. **Never work directly on `main`.** Branch first. It costs one keystroke.
-4. **Write the commit message for a stranger.** It's you in six weeks.
-
----
+- `git status` — what is in which state right now.
+- `git diff` — exactly what changed since the last commit.
+- `git restore <file>` — return a working-tree file to its last committed state.
 
 ## Build It
 
-Run these in the lab repo from Lesson 1. Every step ends in something visible.
+Set up a git project you will use for the rest of this course.
 
-### 1. Take a photograph, then destroy it
+1. Open your terminal in the directory from Lesson 1.
+2. Initialize a git repository:
 
-```bash
-cd ~/claude-course-lab
-printf 'export const greet = (n) => `hi ${n}`\n' > src/greet.ts
-git add -A
-git commit -m "feat: add greet"
-git log --oneline
-```
+   ```
+   git init
+   ```
 
-Now delete the file you just made and prove it was never really gone.
+3. Configure your identity. Git refuses to commit without one:
 
-```bash
-rm src/greet.ts
-ls src/                 # greet.ts is gone
-git checkout -- src/greet.ts
-ls src/                 # back
-```
+   ```
+   git config --global user.name "Your Name"
+   git config --global user.email "you@example.com"
+   ```
 
-✅ You pass when `src/greet.ts` exists again after being deleted.
+4. Create a file:
 
-### 2. Wreck a whole directory and walk back
+   ```
+   echo "Lesson 2 test" > notes.txt
+   ```
 
-```bash
-mkdir -p src/experiment && echo "v1" > src/experiment/a.txt
-echo "v2" > src/experiment/b.txt
-git add -A && git commit -m "chore: experiment"
+5. Check the state:
 
-echo "v3" > src/experiment/a.txt
-rm src/experiment/b.txt
-git add -A && git commit -m "chore: break the experiment"
+   ```
+   git status
+   ```
 
-git log --oneline            # two commits
-git revert HEAD              # undo, keeping history
-git log --oneline            # three commits, newest says "Revert"
-ls src/experiment/           # both files, v1 and v2
-```
+   `notes.txt` is listed as **untracked** — it lives in the working tree but git has not been told to remember it.
 
-✅ You pass when both files are back at their original contents.
+6. Move it to the staging area:
 
-### 3. The case that surprises everyone — recover uncommitted work
+   ```
+   git add notes.txt
+   ```
 
-This is the one that saves people. Work that was **never committed** is not
-lost, as long as you haven't run a destructive command.
+7. Save it to the local repository:
 
-```bash
-echo "important half-finished work" >> src/index.ts
-git status                  # modified: src/index.ts
+   ```
+   git commit -m "First commit"
+   ```
 
-# now something goes wrong
-echo "garbage" >> src/index.ts
-# and you still want that earlier edit:
-git diff src/index.ts       # shows BOTH edits, side by side
-```
+8. Confirm the commit exists:
 
-And if you did overwrite the file completely, the editor's local history or your
-shell's undo usually still has it. Git never had it — but the tool that clobbered
-it usually does.
+   ```
+   git log
+   ```
 
-✅ You pass when `git diff` shows both the original and your addition.
-
-### 4. Branch, work, come back
-
-```bash
-git branch scratch
-git checkout scratch
-echo "experimental" > src/scratch.txt
-git add -A && git commit -m "chore: on scratch"
-
-git checkout main          # or master, depending on your default
-ls src/                    # scratch.txt is not here — and that's correct
-
-git checkout scratch
-ls src/                    # it's back
-git checkout main
-git branch -d scratch
-```
-
-✅ You pass when `scratch.txt` appears only while you're on `scratch`.
-
-### 5. The commit-message test
-
-Look at your last three commits. If you can't tell from the message alone what
-changed and why, rewrite the message:
-
-```bash
-git rebase -i HEAD~3
-```
-
-✅ You pass when each message alone explains the change without opening a diff.
-
----
+   You should see one entry, with your name, your email, and the message.
 
 ## Use It
 
-| Command / concept | When you reach for it |
-|---|---|
-| `git status` | Before anything risky. Tells you what's uncommitted. |
-| `git add -A && git commit -m "..."` | Before handing work to an agent, or before a risky command |
-| `git log --oneline` | Finding the last good state |
-| `git revert <sha>` | Undoing a bad commit while keeping history honest |
-| `git checkout -- <file>` | Restoring one file you deleted or overwrote |
-| `git diff` | Seeing uncommitted work, including the pre-overwrite version |
-| `git branch` / `git checkout` | Isolating an experiment so `main` stays clean |
-| `git branch -d` | Cleaning up a merged branch |
-| `git rebase -i HEAD~N` | Fixing commit messages on recent commits |
+Walk a file through all four states, then prove you can recover it.
 
----
+1. Edit `notes.txt` — add a second line.
+2. Run `git status`. The file is listed as **modified**.
+3. Run `git diff`. Read the output. This is your window into what changed. Use it after every agent run.
+4. Run `git add notes.txt`. The change moves to the staging area.
+5. Run `git commit -m "Add second line"`. The change is now in the local repository and recoverable.
+6. Run `git log --oneline`. You should see two commits.
+
+Now simulate the recovery you will need later:
+
+1. Edit `notes.txt` — delete the entire contents and save.
+2. Run `git status`. The file is **modified**.
+3. Run `git restore notes.txt`. The file is back to its last committed state.
+4. Run `git status`. The working tree is clean again.
+
+This is the safety net in action. The agent destroyed your work, and one command brought it back.
+
+Now set up a remote so a disk failure cannot end the project:
+
+1. Create an empty repository on GitHub. Do not initialize it with a README.
+2. Connect your local repo to it:
+
+   ```
+   git remote add origin https://github.com/YOUR-USER/YOUR-REPO.git
+   ```
+
+3. Push your commits:
+
+   ```
+   git push -u origin main
+   ```
+
+4. Open the repository on GitHub. Your two commits should be visible there.
 
 ## Exercises
 
-1. Delete a file you have **not** committed, then recover it.
-   ✅ You pass when the file is back with its original content, and you can name
-   which command did it.
+1. **The accidental deletion**
+   Edit `notes.txt` and add three new lines. Commit the change. Now delete the file entirely from disk. Recover it using git. Do not re-type the contents.
+   Pass: the file is back on disk with all the lines you added, and `git log` still shows your commit.
 
-2. Make three commits. Revert the middle one. Then read the history top to
-   bottom and confirm the middle change is gone and the other two survived.
-   ✅ You pass when `git log --oneline` shows the revert and `git diff` against
-   the original tip shows only the reverted change missing.
+2. **The bad agent run**
+   Have Claude Code rewrite `notes.txt` in a way that loses information — for example, by deleting a paragraph you care about. Then roll the change back so the original content returns.
+   Pass: the original content of `notes.txt` is restored, and either `git log` shows both the bad commit and a revert commit, or the bad commit no longer exists in history. Either outcome is acceptable.
 
-3. Start a new branch, break `main` deliberately on it, and return to `main`
-   untouched.
-   ✅ You pass when `main` shows a clean `git status` and the broken file does
-   not exist there.
+3. **The remote backup**
+   Make a third change to `notes.txt`, commit it, and push it. Then delete the `.git` directory locally. Re-clone the repo from the remote.
+   Pass: the cloned repo contains all three of your commits, and `notes.txt` is intact.
 
-4. Write a commit message that would make sense to someone reading it in six
-   weeks with no context.
-   ✅ You pass when you can name the change and its reason from the message alone.
-
----
+4. **The unstaged disaster**
+   Make a change to `notes.txt` but do not commit it. Now imagine your disk fails at this moment. What state is your work in, and why?
+   Pass: you can answer in one sentence: the change was only in the working tree, and git cannot recover it because it was never committed. Commit early. Commit often.
 
 ## Key Terms
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| commit | "save point", "snapshot of changes" | A frozen copy of the **entire project** plus a message. Changes are not stored; the whole tree is. |
-| working tree | "my files" | The live folder. Fragile. Nothing you do here is recoverable through git until you commit. |
-| branch | "a copy of the project" | A movable label pointing at one commit. Creating it copies nothing. |
-| `git revert` | "undo" | Adds a new commit that undoes an old one. History stays; the mistake stays visible. |
-| `git checkout -- file` | "get it back" | Restores one file from the last commit. Destroys uncommitted changes to that file. |
-| isolation | "safety" | A separate working tree on a separate branch. Safe **only once committed** — until then the work exists as loose files. |
-
----
+| Working tree | "The folder where my code is." | The files on disk right now, as your editor sees them. Uncommitted changes live here and only here. |
+| Staging area | "A place to review changes before committing." | A snapshot of selected working-tree files, prepared for the next commit. The staging area is not a backup — it is a holding pen. |
+| Local repository | "Where commits are stored." | A database on your machine that records every commit. This is the safety net. Once a change is committed, it is recoverable until you delete the `.git` directory. |
+| Remote | "Where I push code so others can see it." | A copy of your repository on another machine. For solo AI-agent work, the remote is insurance against losing your laptop, not a way to collaborate. |
+| Commit | "A saved change." | A snapshot of specific files at a specific moment, with a message describing why. Commits are the unit of recovery. |
+| `git restore` | "Undo." | Reverts a working-tree file to its state at the last commit. Use it when an agent — or you — has wrecked something and you want the last known-good version. |
 
 ## What this lesson skipped
 
-No merging two branches with real conflicts, no rebasing onto other branches, no
-remotes or pull requests — Phase 02 covers all of that properly, and this lesson
-must not lean on it.
-
-No undo for a `git reset --hard` that destroyed uncommitted work. Git genuinely
-cannot recover that. Say so out loud once: **uncommitted work is the only work
-git cannot bring back.** That is the entire reason for the first safety rule.
-
----
-
-**One thing to carry into every later phase:** always tell an agent to commit its
-work. Isolation without a commit is not a backup.
+- **Branching and merging.** Branches isolate work, but for solo AI-agent use, linear commits on `main` are enough to start. Branches become important when multiple agents or features compete, which is a later lesson.
+- **Merge conflicts.** These appear when two histories diverge. With one developer and one agent, conflicts are rare until you start branching.
+- **Pull requests and code review.** Collaboration patterns, not safety-net patterns. Solo AI-agent work does not need them.
+- **`git rebase` and history rewriting.** Powerful, and also a way to destroy commits. Beginners should commit often, and rewrite history only when they know what they are doing.
+- **`.gitignore`.** A way to keep generated files out of the repository. One line worth knowing: anything git does not track cannot be recovered by git. Track everything that matters.

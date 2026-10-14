@@ -1,212 +1,188 @@
 # Editor Setup
 
-> After this lesson an agent can point at a file and a line, and you land there
-> without searching.
+> An editor that fights the agent workflow costs more time than it saves.
 
 **Type:** Build
-**Prerequisites:** Lesson 1, Dev Environment
-**Time:** ~30 minutes
-
----
+**Prerequisites:** Lesson 1 (Dev Environment)
+**Time:** ~25 minutes
 
 ## Learning Objectives
 
-- Jump straight to a file and line from a command, the way an agent will ask
-- Find every reference to a name in one keystroke
-- See, in one glance, the lines you are about to hand to an agent
-- Reject an agent's edit while keeping it recoverable
-
----
+- Turn on format-on-save in your editor and pick a formatter that matches the project's language
+- Keep an integrated terminal one keystroke from the code you are reading
+- Run a regex search across the whole project in one keystroke and jump to any hit
+- Bind the project's test command to one key and watch the output stream into an editor panel
+- Tell, in one sentence, why each of those four capabilities matters when an agent is editing your code
 
 ## The Problem
 
-An agent says: "the bug is at `src/parse.ts:142`." You open your editor, type
-`parse`, wait for the file finder, scroll, look for line 142, check whether that
-is the line. Forty seconds of ceremony, every time, for a fact you were already
-told.
+You ask an agent to fix a bug. It edits four files. You open the diff. The diff is full of "changes" you did not ask for: tabs instead of spaces, double quotes swapped for single, a trailing newline gone. None of them change behaviour. All of them pollute the diff so you cannot see what actually changed.
 
-The cost is not the forty seconds. It is that the ceremony is where you stop
-paying attention. Better: make the jump free, so reading what the agent actually
-changed takes real thought.
+You try to run the tests. You alt-tab to a terminal. You type the command. You alt-tab back. The output is mixed in with shell startup noise. You alt-tab back to read it. Three round-trips for one fact.
 
----
+You try to find where the agent introduced a function call. You open the file. You Ctrl-F. You type the name. The first hit is a comment. The second is a string. You repeat. Fifteen seconds, and you have stopped paying attention to what you were looking for.
+
+The editor is in your way. Each moment costs a few seconds. The few seconds are where you stop paying attention to what the agent actually did. The fix is not a faster brain — it is an editor that does not make you stop and fix what it should have done for you.
 
 ## The Concept
 
-Three capabilities, in the order you feel them.
+Four capabilities, each of which makes one specific moment in the agent workflow free. They are independent. Pick whichever ones you do not already have.
 
-### 1. Address a location directly
+### 1. Format-on-save
 
-```bash
-code src/parse.ts:142
+Format-on-save means the editor runs a formatter (Prettier, Black, gofmt, rustfmt, whatever fits the language) every time you save a file. You stop worrying about whitespace, quote style, and trailing commas. The formatter owns them.
+
+This matters with agents more than without, because the model has an opinion about style that may not match yours. Format-on-save rewrites whatever the agent produced, in your style, silently, on save. The diff stays clean. You review the diff, not the formatter's opinions.
+
+The opposite — disabling formatting because "the agent got it close enough" — is the start of a codebase where every file is formatted in the dialect of whoever last touched it.
+
+### 2. Integrated terminal
+
+An integrated terminal is a shell pane that lives inside the editor window, one keystroke from the code. You do not alt-tab. The shell shares the editor's working directory, so paths and short commands just work.
+
+The moments it earns its keep:
+
+- You just accepted an agent change. You type `git diff --stat` to see the shape.
+- The agent says "I ran the tests." You type the test command yourself to verify.
+- The agent produced a build error. You run the build again, in the same pane the agent was in, and copy the failing line straight from your terminal scrollback.
+
+A separate terminal app is fine if you have a fast switch and a shared clipboard. An integrated terminal just removes the switch.
+
+### 3. Project-wide search
+
+Project-wide search means: in one keystroke, search every file in the project for a regex, show the hits in a list, jump to any hit in one more keystroke. Not a file picker. Not "find in current file." Across the project, instantly.
+
+This is the move you reach for when the agent edited something and you want to know where else it is used, or where a name came from, or whether a particular error message appears anywhere in the codebase. The grep-in-terminal fallback works, but a search panel that lists hits and jumps on enter is the difference between "I read every hit" and "I read the first one and gave up."
+
+### 4. A real test runner, bound to one key
+
+A real test runner means: one keystroke runs the project's test command — whatever the language uses, `pytest`, `npm test`, `go test`, `cargo test`, or the project's own runner. The output streams into a panel. The failures are clickable. Running it again is the same keystroke.
+
+This matters because the agent's job does not end at "the code compiles." The agent's job ends at "the tests pass." You want to verify that in the same window where you are reading the code. If running the tests is three commands and a context switch, you will skip it. If it is one key, you will not.
+
+**The reframe:** an editor that fights the agent workflow costs more time than it saves; pick one that disappears during the four moments that matter — saving, diffing, searching, testing.
+
+```mermaid
+flowchart LR
+    A[Agent edits] --> B[Save]
+    B --> C[Format-on-save]
+    C --> D[Diff]
+    D --> E[Search references]
+    E --> F[Run tests]
+    F --> G{Pass?}
+    G -->|yes| H[Approve]
+    G -->|no| A
 ```
-
-Any terminal-to-editor setup that accepts `file:line` turns a sentence from an
-agent into a cursor position. Worth setting up in whichever editor you actually
-use — the `code` command here, `vim src/parse.ts +142`, `idea --line 142`.
-
-### 2. Go to a definition, or every use, in one keystroke
-
-| Key | VS Code | What it does |
-|---|---|---|
-| F12 | `Cmd/Ctrl+click` on a name | Jump to definition |
-| Shift+F12 | `Alt+click` | All references |
-| `Ctrl-Shift-F` | — | Search across files |
-| F2 | `F2` on a name | Rename everywhere, safely |
-
-Rename-everywhere is the one people under-use. When an agent renames a symbol in
-three places and misses one, `F2` fixes it in one operation.
-
-### 3. Stage a diff before you approve it
-
-The habit that prevents disaster: never accept a large agent change by eye.
-
-```bash
-git diff                    # the whole change, in your terminal
-git diff --stat             # how much changed, per file
-git diff src/parse.ts       # just one file
-```
-
-`git diff` is the review surface. It shows exactly what will land, and it works
-even if your editor is a text file you don't trust.
-
-> **The reframe:** the editor is not where you write the change — it is where you
-> *verify* it, and a review you do without reading the diff is not a review.
-
----
 
 ## Build It
 
-### 1. Make `code` accept file:line
+Pick whichever editor you already use. Do not switch editors in this lesson. The four capabilities are present in every modern one — VS Code, JetBrains, Sublime, Vim, Neovim, Helix, Zed. Configure the one you have.
 
-```bash
-# add to your shell profile, then reload
-alias c='code'
-```
+### 1. Turn on format-on-save
 
-Test it on a real file with a real line number.
+- VS Code: `Editor: Format On Save` setting; install a formatter extension that matches the language (`prettier`, `black`, `rustfmt`, etc.).
+- JetBrains: `Settings → Tools → Actions on Save → Reformat code`.
+- Neovim: a `BufWritePre` autocommand that pipes the buffer through the language's formatter.
+- Helix: built in; run `format` on save with `:set auto-format on`.
 
-✅ You pass when the cursor lands on the line number you gave.
+Verify by saving a file with bad indentation. Pass when the bad indentation disappears without you touching it.
 
-### 2. Set up the file you jump to most
+### 2. Open the integrated terminal
 
-Before an agent session, open the two or three files that task will touch.
+- VS Code: `` Ctrl+` `` opens the terminal panel.
+- JetBrains: `View → Tool Windows → Terminal`, or `Alt+F12`.
+- Vim / Neovim: a terminal split (`:terminal`).
+- Helix: `` Ctrl+` `` to open a terminal.
 
-```bash
-code src/index.ts src/parse.ts
-```
+Verify by running `pwd` and confirming it matches the editor's working directory.
 
-✅ You pass when both files open in tabs without touching the mouse.
+### 3. Bind project-wide search to one key
 
-### 3. Review the way you will actually be asked to
+- VS Code: `Ctrl+Shift+F` for the search panel, `Ctrl+Shift+H` for replace.
+- JetBrains: `Ctrl+Shift+F` for find-in-path, `Ctrl+Shift+R` for replace-in-path.
+- Sublime: `Ctrl+Shift+F`.
+- Vim / Neovim: `rg` or `:grep` behind a leader-key mapping.
+- Helix: `Space-s` for ripgrep search.
 
-Make a change on a scratch branch, then read it three ways:
+Verify by searching for a name you know appears in five files. Pass when the hits appear in a list and a click or Enter jumps to the location.
 
-```bash
-git diff --stat              # shape: how much, where
-git diff                     # content: line by line
-code --diff src/index.ts     # side-by-side, coloured, in your editor
-```
+### 4. Bind the project's test command to one key
 
-✅ You pass when you can state exactly which lines changed without scrolling
-through the file.
+This is the one that requires you to know the project's test command. Find it once — usually in `package.json`, `pyproject.toml`, `Makefile`, or the README. Bind it.
 
-### 4. Reject an edit without losing it
+- VS Code: open `keybindings.json` and add a binding that runs the command in the integrated terminal, or use an extension like `vscode-test-runner`.
+- JetBrains: most run configs run with the green arrow; for a single binding, `Run → Edit Configurations`, then a keybinding.
+- Vim / Neovim: a leader-key mapping that runs `:!pytest` (or whatever) and streams the output.
+- Helix: `:sh pytest` or a user keybinding.
 
-The safety move. Never delete a bad agent change — park it.
+Verify by running the tests once. Pass when the output streams into a panel, a failing line is clickable, and pressing the same key runs the tests again from a clean state.
 
-```bash
-git stash push -m "agent attempt: parse rewrite"
-git status                   # clean
-```
+### 5. Put them together on one agent change
 
-Later, look at what you threw away:
+Make a scratch change, or use the agent to make one. Then in one session, without leaving the editor:
 
-```bash
-git stash list
-git stash show -p stash@{0}
-```
+1. Save the file. Watch the formatter run.
+2. Read the diff in the integrated terminal with `git diff`.
+3. Search for a name the change introduced, using project-wide search.
+4. Run the tests with your bound key.
 
-Bring it back if it turns out to be right:
-
-```bash
-git stash pop
-```
-
-✅ You pass when the file is restored to its committed state and the agent's
-attempt is still recoverable from the stash list.
-
-### 5. Find every place a name appears
-
-Open any code file, put the cursor on a function name, press Shift+F12.
-
-Then compare against what git thinks changed:
-
-```bash
-git diff --name-only
-```
-
-✅ You pass when you can say whether the agent's rename touched every reference
-or missed some.
-
----
+Pass when each step is one keystroke or one click, and you never alt-tabbed.
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Moment in the workflow | Capability you reach for |
 |---|---|
-| `code file:line` | Jumping to what an agent pointed at |
-| `git diff` | Reviewing any agent change before it lands |
-| `git diff --stat` | Gauging how big a change is in one line |
-| `git diff -- file` | Narrowing the review to one file |
-| `git stash push -m "..."` | Parking a change you don't want yet |
-| `git stash list` / `git stash show -p stash@{0}` | Looking at what you parked |
-| `git stash pop` | Bringing a parked change back |
-| Shift+F12 (find references) | Checking whether a rename was complete |
-| F2 (rename symbol) | Fixing a rename an agent got wrong |
-| `code --diff file` | The visual review surface |
+| You saved an agent's edit | Format-on-save (already ran, silently) |
+| You want the shape of what changed | `git diff --stat` in the integrated terminal |
+| You want the content of what changed | `git diff` in the integrated terminal, or the editor's diff view |
+| You want to know where a name is used | Project-wide search |
+| You want to verify the change actually works | Bound test-runner key |
+| The agent's edit broke something | Bound test-runner key → read failing line in panel → search for the broken symbol |
 
----
+| Don't do this | Do this instead |
+|---|---|
+| Read the diff in a separate terminal app | `git diff` in the integrated terminal |
+| Type `npm test` (or its equivalent) every time | Bound key on the project's actual test command |
+| Tell the agent "make sure the code is formatted" | Turn on format-on-save and stop asking |
+| Open three files to find one reference | Project-wide search across the whole project |
+| Read a failing test by alt-tabbing to a terminal | Click the failing line in the test panel |
 
 ## Exercises
 
-1. Open a file at line 1, then at line 200, in two commands. No scrolling, no
-   file-picker.
-   ✅ You pass when you land on both lines exactly.
+1. **Format-on-save earns its keep.**
+   In any source file, add five lines with deliberately bad indentation. Save. Pass when the file is correctly formatted without you touching the spacing.
+   Pass: the file's whitespace matches the project's style after one save, with no manual edits from you.
 
-2. Make a ten-line change to one file, then describe the change using only
-   `git diff --stat` and `git diff`. No opening the file.
-   ✅ You pass when your description names the file and every changed region.
+2. **Search five files in one keystroke.**
+   Pick a function name that you know is referenced in five or more files in your project. Run project-wide search for it. Pass when all five references appear in a list and jumping to any one of them is one keystroke.
+   Pass: a hit list with five or more entries, each openable in one keystroke.
 
-3. Have an agent (or a friend) make a change you dislike. Park it with `git
-   stash push`, verify the file is back to its committed state, then recover the
-   parked version with `git stash show -p` without applying it.
-   ✅ You pass when the file is clean *and* you can still read the discarded diff.
+3. **Tests run in one key.**
+   Bind the project's test command to one key. Run the tests. Pass when the output streams into a panel inside the editor (not a separate window) and a failing line is clickable.
+   Pass: one keystroke runs the tests; output is in an editor panel; a failure line opens its file when clicked.
 
-4. Rename a function by hand in a file that has three call sites, then use
-   rename-everywhere to verify nothing was missed.
-   ✅ You pass when the project still builds and no stale references remain.
-
----
+4. **Verify an agent change without leaving the editor.**
+   Use an agent (or your past self on a scratch branch) to make a small change that touches two files. Without leaving the editor, run the four-step verification from Build It step 5. Pass when each step is one keystroke, and you can name which lines changed without scrolling.
+   Pass: all four steps happen in the editor; you can name the changed lines from memory afterwards.
 
 ## Key Terms
 
-| Term | What people say | What it actually means |
-|---|---|---|
-| `file:line` | "a jump link" | A path plus a line number that editors turn into a cursor position. The agent's default way of pointing at code. |
-| diff | "the changes" | The line-by-line difference between two states. `git diff` compares working tree to the last commit. |
-| `git diff --stat` | "summary" | Files changed and lines added/removed, per file. No content. |
-| stash | "save for later", "undo" | A commit that is not on any branch. Parks work off your working tree without deleting it. |
-| find references | "global search" | Structural lookup of one symbol's uses, understanding scope. Search finds text; this finds code. |
-
----
+| Term | What people say | What it actually means | Why the misconception matters |
+|---|---|---|---|
+| **Format-on-save** | The editor pipes the file through a formatter every time you save | Some people treat formatting as a manual chore, or as "what the agent should remember." It is neither. The editor does it, invisibly, every save — and with an agent in the loop, "what the agent should remember" is the worst possible plan. |
+| **Integrated terminal** | A shell pane inside the editor window, sharing its working directory | People think of terminals as separate apps. With agents, you spend half your time in shell and half reading code. A switch costs attention, not seconds, and attention is what you are trying to spend on the change. |
+| **Project-wide search** | A single-keystroke regex search across every file in the project, with a jumpable hit list | People confuse it with "find in current file." Current-file search finds text. Project-wide search finds code — including hits in files you did not know mattered. With agents, you almost always want the latter. |
+| **Test runner** | A program that runs the project's tests and reports pass/fail per file or per case, bound to one key | People treat tests as something you "remember to run." A test runner bound to one key is the difference between remembering and not — and between verifying and trusting the agent's word. |
+| **Save** | A signal to the editor that the buffer is ready, plus a trigger for hooks like formatters and linters | Save is no longer just "write the file to disk." In an agent workflow, save is the moment the diff stops being dirty, the formatter runs, and you cross from "agent is still typing" to "agent is done, and you can review." |
 
 ## What this lesson skipped
 
-No keybinding customisation, no themes, no extension recommendations, no
-multi-cursor editing tutorial, no language-server setup. Those are taste, and
-taste is not what this course teaches.
+No editor recommendation. Use the one you have. Switching editors is its own lesson and its own cost.
 
-Also skipped: LSP setup beyond what editors do automatically. If a later lesson
-needs language-server concepts it will ground them there — nothing above assumes
-them.
+No LSP setup, no language-server configuration, no extension roundup. Most editors wire the language server automatically when you open a file of the right type.
+
+No theme, no font, no keybinding tutorial beyond the four keys above. Taste is not what this course teaches.
+
+No AI editor features — inline suggestions, agent sidebars, chat panels. Those are agent-shaped additions layered on top of the four capabilities above. They are worth knowing, but they are not what makes the editor *fit* the workflow.
+
+What this lesson assumed: you already have an editor installed, a project open, and the project's test command runnable from a shell. If you do not have those, Lesson 1 (Dev Environment) is where they live.

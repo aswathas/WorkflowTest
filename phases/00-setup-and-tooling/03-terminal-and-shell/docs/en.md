@@ -1,225 +1,174 @@
-# Terminal & Shell
+# Terminal and Shell
 
-> After this lesson you can chain commands, keep long-running work alive while
-> you do something else, and read a pipeline without guessing.
+> After this lesson you can read what the agent is about to do, decide if it is right, and run it yourself when it is wrong.
 
 **Type:** Learn
 **Prerequisites:** Lesson 1, Dev Environment
 **Time:** ~35 minutes
 
----
-
 ## Learning Objectives
 
-- Run a command's output straight into another command's input
-- Keep a long job running while you get your terminal back
-- Find the one flag that changes a command's behaviour, without reading its whole manual
-- Explain why `cd` inside a piped command does nothing
-
----
+- Read any shell command the agent proposes and name the file it will touch
+- Run the same command yourself before letting the agent run it
+- Predict the difference between `>` and `>>` in a command the agent shows you
+- Recover from a wrong agent command by typing the right one yourself
+- Name three shell commands an agent reaches for on every task
 
 ## The Problem
 
-An agent prints forty lines of build output and asks you to find the error. You
-scroll. You miss it. You scroll back. You miss it again.
+Two hours into a session the agent says "I'll delete the tests folder." You approve. It was the wrong folder. The work that lived there — including yesterday's draft, never committed — is gone.
 
-The terminal can do this for you, and the reason it can is a single character —
-`|`. Every time you read a command with a pipe in it and shrug, you are giving up
-a tool that already solves the exact problem in front of you.
+You had a chance to catch this. The command was on the screen. You were reading the prose, not the command.
 
----
+The shell is not a separate skill. **The agent runs every action through a shell.** When you ignore the shell, you trust the agent to be right about a language you have never read.
 
 ## The Concept
 
-Three ideas carry almost all of it.
+The agent does not have a private channel. Every action it takes — reading a file, listing a directory, running tests, editing code — arrives as a shell command on your screen before it runs. You see it. You can copy it. You can run it yourself first.
 
-### 1. Output flows; programs compose
-
-Every command writes to two streams. `stdout` is the result. `stderr` is the
-complaint. The pipe `|` sends the left one's stdout into the right one's stdin.
+One concept, three corollaries.
 
 ```mermaid
 flowchart LR
-    A[npm test] --stdout-->|pipe| B[grep FAIL]
-    B --> C[head -5]
-    C --> D[your screen]
+    A[You describe a goal] --> B[Agent writes a shell command]
+    B --> C{You read it}
+    C -->|looks right| D[You approve, it runs]
+    C -->|looks wrong| E[You type the right one]
+    D --> F[Output comes back]
+    E --> F
+    F --> B
 ```
 
-Compose left to right. `A | B | C` means "run A, feed its output to B, feed that
-to C." Each stage should do one thing.
+The middle box — *you read it* — is the only skill this lesson teaches. Everything else is supporting muscle.
 
-### 2. Long jobs need to stop owning your terminal
+### Corollary 1 — the commands are ordinary
 
-`npm install` takes four minutes. Without a way to detach, you either wait or open
-another tab and lose the output. Two answers:
+The verbs an agent reaches for are the ones you already know how to read.
 
-| Need | Tool | Behaviour |
-|---|---|---|
-| Run in the background, check later | `command &` | Returns instantly, output accumulates |
-| Run detached, reconnect later | `tmux` / `screen` | Detach and reattach to the same screen |
-| Run detached, collect output to a file | `command > out.log 2>&1 &` | The log survives the process |
+| What the agent is doing | The shell verb it uses |
+|---|---|
+| Reading a file | `cat`, `head`, or a tool that wraps one |
+| Listing a directory | `ls` |
+| Searching code | `grep -rn` |
+| Editing a file | `sed -i`, here-docs, or a tool that writes it |
+| Running tests | `npm test`, `pytest`, `go test` |
+| Inspecting git state | `git status`, `git diff` |
+| Deleting something | `rm`, `rm -rf` |
 
-The last one is what an agent will use most. Capture to a file, read the file.
+None of these are hidden. None are special. They are the same commands you would type.
 
-### 3. `cd` is a shell builtin, so pipes can't use it
+### Corollary 2 — overwriting is a one-character mistake
 
-`cd` changes the shell's own state. A program on the left of a pipe runs in a
-subshell — its `cd` is discarded the moment it exits. This is not a bug, it's how
-processes work, and it will waste you an hour if nobody says it.
+The single character `>` overwrites. `>>` appends. The agent almost never means overwrite when it types `>`. Read for it.
 
 ```bash
-cd src && npm test        # works — sequential, same shell
-echo hi | cd src          # meaningless — the cd dies with the subshell
+echo "# Contributing" > CONTRIBUTING.md     # replaces if it exists
+echo "## Setup" >> CONTRIBUTING.md          # adds to the end
 ```
 
-If you need "run this in that directory," wrap it:
+### Corollary 3 — the agent's working directory is yours
 
-```bash
-(cd src && npm test)      # subshell — cd applies inside, discarded after
-```
+A `cd` inside the agent's tool call affects only that call. The shell prompt you see is the one that matters; if the agent's command has no `cd`, it runs in the same folder you are in. Check with `pwd` if you are unsure.
 
-> **The reframe:** the shell is not a place you type commands, it is a small
-> program whose only interesting part is what happens *between* the words — so
-> read a pipeline left to right, and trust the exit code over the prose.
-
----
+> **The reframe:** the agent's commands are your commands, written down before they run — so learning the shell is learning to read what the agent is about to do.
 
 ## Build It
 
-### 1. Build a pipe that finds one error
+Do these in the lab repo from Lesson 1.
+
+### 1. Read what the agent would have read
 
 ```bash
-npm test 2>&1 | grep -i "error" | head -20
+cd ~/claude-course-lab
+cat src/index.ts
 ```
 
-Read it as three verbs: *run the tests, keep only lines mentioning error, show at
-most twenty.* The `2>&1` folds stderr into stdout so `grep` sees the failures too.
+The agent uses this — or its `Read` tool, which wraps this — every time it opens a file. You have now read the same file the same way.
 
-✅ You pass when you see error lines without scrolling through raw output.
+Pass: you see the contents of `src/index.ts` on your screen.
 
-### 2. The same thing without a pipe
-
-Worth doing once so you know what the pipe saves you:
+### 2. Run a search the agent would run
 
 ```bash
-npm test > out.log 2>&1
-grep -i "error" out.log
+grep -rn "sum" src/
 ```
 
-✅ You pass when `out.log` exists and contains the same error lines.
+This is how an agent checks whether a name is already taken. Read it as: *search every file under `src/`, print the file name and line number for every line containing `sum`*.
 
-### 3. Detach a long job into a log file
+Pass: you see file paths and line numbers, not raw blobs.
+
+### 3. Append to a file from the terminal
 
 ```bash
-npm install > install.log 2>&1 &
-echo "running as job $!"
-
-# later, in another terminal
-tail -f install.log        # follow it live
-# or
-cat install.log            # read it when it's done
+echo 'export const double = (x) => x * 2' >> src/index.ts
+cat src/index.ts
 ```
 
-✅ You pass when your prompt returns immediately and `install.log` grows.
+Notice the `>>`, not `>`. If you had typed `>` the old content is gone. This is the difference between a one-character typo and data loss.
 
-### 4. Survive a closed terminal
+Pass: the original `sum` line is still there and a new `double` line was added.
+
+### 4. Catch a wrong `rm` before it runs
+
+In a throwaway folder, type — but do **not** press enter yet:
 
 ```bash
-npm test > test.log 2>&1
-disown                    # detach it from this shell's job list
+mkdir -p /tmp/sandbox && cd /tmp/sandbox && echo hi > keep.txt && echo hi > keep2.txt
+rm -rf keep
 ```
 
-Close the tab. Reopen. `cat test.log`. If the process was killed with the shell,
-you lost it — that's what `tmux` is for:
+Read it left to right: make a folder, enter it, write `keep.txt`, write `keep2.txt`, then `rm -rf keep`. Predict what remains. Press enter. Confirm your prediction was right.
 
-```bash
-tmux new -s work         # start a named session
-# ... run long things ...
-# Ctrl-b, then d          detach
-tmux ls                   # see sessions
-tmux attach -t work       # come back
-```
+This is the moment an agent would have approved and moved on.
 
-✅ You pass when you can detach and reattach and still see the session.
+Pass: you can predict the result before pressing enter, and explain why.
 
-### 5. Use a subshell to run in a directory
+### 5. Predict, then run
 
-```bash
-(cd packages/api && npm test)
-```
+For every command in steps 1–4, before pressing enter say out loud: which files will change, which will not, and whether output will appear. Then run it. If reality disagreed with your prediction, that is the lesson. Write the gap in `NOTES.md` inside the lab repo.
 
-✅ You pass when the test runs in `packages/api` and your prompt is still where
-it was before.
-
-### 6. Find a command's one useful flag
-
-```bash
-git help -a | grep "  " | head        # what's available
-git commit --help | less                # the real manual
-man git-log | grep -A2 "--follow"       # one flag, with its neighbours
-```
-
-Most tools are consistent: `-h` short help, `--help` long, `-v` or `--version`.
-Learn the two or three flags you use daily rather than the full manual.
-
-✅ You pass when you find a specific flag without leaving the terminal.
-
----
+Pass: you wrote at least one prediction, ran it, and noted the gap.
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Command | When you reach for it |
 |---|---|
-| `cmd \| grep -i x` | Extracting one line from noisy output |
-| `cmd 2>&1` | Making sure error output survives a pipe |
-| `cmd > out.log 2>&1` | Capturing everything to a file to read later |
-| `cmd &` | Starting something and getting your prompt back |
-| `tail -f file` | Watching a file while it grows |
-| `tmux new -s name` | A job that must survive a closed terminal |
-| `(cd dir && cmd)` | Running a command somewhere else without moving |
-| `cmd --help` / `man cmd` | One flag, not the whole manual |
-| `Ctrl-r` | Re-running a previous command by typing a few letters |
-| `!!` | The previous command again, e.g. `sudo !!` |
-
----
+| `cat file` | Reading what the agent is about to read |
+| `grep -rn "x" dir/` | Checking whether a symbol or string already exists |
+| `echo "..." >> file` | Appending to a file (notice `>>`) |
+| `echo "..." > file` | Replacing a file's contents (notice `>`) |
+| `rm file` | Deleting one file |
+| `rm -rf dir` | Deleting a directory; `-r` means recursive, `-f` means no confirmation |
+| `pwd` | Confirming the agent's working directory is yours |
+| `!!` | Repeating the last command (often after `sudo !!`) |
+| `Ctrl-r` | Searching command history by typing a few letters |
+| `man cmd` or `cmd --help` | Looking up what one flag does |
 
 ## Exercises
 
-1. Run your test suite and produce a file containing only lines that mention
-   either `FAIL` or `Error`.
-   ✅ You pass when the file exists, is non-empty, and contains nothing else.
+1. In your lab repo, list the files, read `src/index.ts`, then list the files again. The list is the same — the read did not create anything.
+   Pass: you can name three commands the agent runs that are read-only and create no new files.
 
-2. Start a long job, get your prompt back within a second, and read its output
-   from a file three minutes later without having sat and watched.
-   ✅ You pass when you never waited on the terminal and the log is complete.
+2. Type `echo "first" > notes.txt`, then `echo "second" >> notes.txt`, then `echo "third" > notes.txt`. Read `notes.txt` after every step.
+   Pass: you can state the difference between `>` and `>>` in one sentence, with the final contents of the file as evidence.
 
-3. Reproduce the `cd` surprise: show that `(cd src && pwd)` prints the new path
-   while `pwd | cat` followed by a `cd` does not persist.
-   ✅ You pass when you can show both behaviours and explain why in one sentence.
+3. Pretend an agent proposed `rm -rf src/`. Predict what happens, then run a preview version that only lists what would be removed — `find src -type f` or `ls -R src/` does the job without deleting.
+   Pass: you can name one way to preview a destructive command before running it.
 
-4. Find the flag for a command you use often that you had been guessing at, and
-   write its one-line meaning in `NOTES.md`.
-   ✅ You pass when you can state the flag's effect without re-reading `--help`.
-
----
+4. Open a new terminal tab, run `pwd`, then run `git status`. Both outputs should be from your lab folder. If not, the agent would have worked in the wrong place.
+   Pass: both commands report the lab folder.
 
 ## Key Terms
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| pipe `\|` | "redirect" | Connects one command's **stdout** to another's **stdin**. Not a file redirect — that's `>`. |
-| stdout / stderr | "output" / "errors" | Two separate streams. `2>&1` merges the second into the first so a pipe sees both. |
-| subshell | "a new shell" | A shell spawned for one command. Its `cd` and environment changes vanish when it exits. |
-| `&` | "run it later" | Start in background, return the prompt now. The job still dies if its parent shell exits. |
-| `tmux` | "screen, better" | A terminal multiplexer. Detach and reattach, so the job survives the window closing. |
-| flag | "option", "switch" | A single-letter or single-word argument that changes one behaviour of a command. |
-
----
+| shell | "the terminal" | The program that interprets what you type. The terminal is the window; the shell is what runs inside it. |
+| command | "a line of code" | One verb the shell runs, with arguments after it. `grep -rn "x" src/` is one command, not five. |
+| redirect `>` | "save output" | Overwrite the file on the right with the left side's output. If the file existed, it is gone. |
+| redirect `>>` | "append output" | Add to the end of the file. The old contents survive. |
+| flag | "option", "switch" | A single-letter or single-word argument after the verb that changes its behaviour. `-r` in `rm -rf` means recursive; `-f` means no confirmation. |
+| working directory | "the project folder" | One specific folder a command runs in. The agent inherits yours; if it `cd`s, it does so only inside its own tool call. |
 
 ## What this lesson skipped
 
-No shell scripting — no `for`, no functions, no quoting rules beyond what appeared
-in the examples. No job control (`Ctrl-Z`, `fg`), no process theory, no
-`sed`/`awk` beyond grep. If a later lesson needs one of those it will ground it
-inline; this lesson stays at the level that keeps you unblocked while reading
-agent output.
+No pipes beyond `cat`-into-`grep`. No subshells, no job control, no `tmux`, no shell scripting, no quoting rules beyond `>` vs `>>`. If a later lesson needs one of those — particularly subshells, which decide how `cd` survives across an agent's tool call — it will ground it inline. This lesson stays at the level that lets you read the agent's next command before approving it.
