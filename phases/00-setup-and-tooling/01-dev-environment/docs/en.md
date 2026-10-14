@@ -21,9 +21,43 @@ By the end of this lesson you will be able to:
 
 ## The Problem
 
-<< YOU WRITE THIS: the consequence. Why does a bad environment cost you
-   something real, not just time? One or two paragraphs. Open with the pain,
-   not the definition. If you have a scar from a bad setup, use it. >>
+An agent does not read your mind. It reads the directory you launched it in, the
+files in that directory, and the instructions in `CLAUDE.md`. If those three
+things are unclear, the agent is not being difficult — it is guessing, and you
+are the only one who can tell it's guessing.
+
+Here is what that costs, from building this course. Three failures that all looked
+like the tool being broken, and all were environment problems:
+
+**The session that refused to start.** A worktree tool reported *"not in a git
+repository"* while `git rev-parse` in the same directory returned `true`. The
+harness had probed the working directory at launch, found nothing, cached the
+answer, and never checked again. The fix was to restart. **Twenty minutes
+gone, and no amount of re-reading the docs would have found it** — the
+documentation and the tool were both correct; the timing was wrong.
+
+**The failing build that wasn't.** After a clean merge of three agents' work,
+the test suite went red. It read like total failure. It was a wrong glob in
+`package.json`. **Nine pass, zero fail after a one-character fix.** If you trust
+a red suite without checking the runner first, you throw away good work.
+
+**The setting that did nothing.** You edit a config file, restart, and the
+behaviour is unchanged. You edit it again, harder. The problem is that four
+other files also set that key and one of them wins. **`/status` tells you which
+one in a single line.** It is the most under-used command in the tool.
+
+Notice what these have in common: **each one presented as a bug in the tool, and
+each was fixed in under a minute once you knew where to look.** The environment
+is where that knowledge lives. Set it up badly and every later lesson costs you
+an hour of debugging your own setup.
+
+---
+
+> **Sharpen this with your own scars.** The three above are real, but they're
+> mine. If you've lost an afternoon to a config problem, a wrong-directory
+> incident, or a tool that silently didn't work, that story is sharper than
+> anything here — write it into this section. A lesson's Problem section is
+> worth most when the pain is recognisable to *you*.
 
 ---
 
