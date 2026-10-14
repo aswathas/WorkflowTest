@@ -7,21 +7,62 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Remotes, Forks, and the Full Mental Model that needs a new situation, not recall.",
+      "prompt": "Your push is rejected as non-fast-forward. A colleague pushed first. What do you do?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "git push --force, so your commit wins",
+        "git fetch origin, then merge or rebase origin/main, then push again",
+        "git push --force-with-lease, so your commit wins when the remote has not moved",
+        "git reset --hard origin/main, discarding your local commits, then push"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Non-fast-forward means the remote has commits you do not; the fix is to get them and then combine, in either direction you chose in Lesson 14. Forcing (A) deletes your colleague's commit — the exact failure that flag causes. `--force-with-lease` (C) still overwrites whenever the remote *hasn't* moved, which is precisely the case that just failed, so it would reject too. Hard-resetting to origin/main (D) throws away your own work to solve a problem you did not have.",
+      "concept": "non-fast-forward"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "What does origin/main actually represent?",
+      "options": [
+        "The current state of main on the remote, queried live",
+        "Your local record of what main looked like on the remote at your last fetch, which can be stale",
+        "A branch on your machine that mirrors the remote automatically",
+        "A read-only view maintained by the hosting platform"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "It updates only when you fetch — which is exactly why the non-fast-forward rejection in the sibling question could surprise you: your `main` matched a memory, not the server. Live state (A) would make that rejection impossible to encounter. It is a local ref (C), not a mirror kept in step. And it is a plain branch ref in your own repository (D), maintained by your fetch, not by the platform.",
+      "concept": "remote-tracking-branch"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "You have no write access to a repository and want to propose a change. What is the path?",
+      "options": [
+        "Request write access from the owner, then push directly to main",
+        "Fork it to your own account, push to your fork, and open a pull request against the original",
+        "Push to the original's main and open a pull request from your local machine",
+        "Email the maintainer a patch file generated from git format-patch"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Push access is the constraint, so the fork exists to give you somewhere you *can* push — then the pull request asks the original to take your commits. Pushing to the original (C) is rejected by definition. Waiting for write access (A) works but turns a five-minute contribution into a wait. A patch email (D) is a genuine 2005 workflow that no longer matches how anyone reviews code, and it is not what the lesson teaches.",
+      "concept": "fork"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "Before pushing a long-running feature branch to a shared repo, which one command tells you what you are about to publish?",
+      "options": [
+        "git status",
+        "git log origin/main..feature",
+        "git branch -a",
+        "git diff origin/main"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "`origin/main..feature` is the set of commits you have that the remote does not — precisely the set a push would publish, and the set you should be able to defend line by line. `git status` (A) shows uncommitted work, which is a different question. `git branch -a` (C) lists labels, not commits. And `git diff` (D) shows the net tree difference, which can look empty or huge while hiding exactly the intermediate commits you did not mean to ship.",
+      "concept": "pre-push-check"
     }
   ]
 }

@@ -7,21 +7,62 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Commit Is a Photograph, Not a Diff that needs a new situation, not recall.",
+      "prompt": "An agent edited six files: one real bug fix, three unrelated renames, and two files it touched while exploring. You want the fix in history and the rest out. What do you do?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "Commit all six, then use git revert later on the unwanted four",
+        "git add only the fix file, then commit",
+        "Commit all six so the history records what happened, and be more careful next time",
+        "git add -A, git commit, then git reset --soft HEAD~1 to separate them afterwards"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The staging area is the filter, and using it before the commit costs seconds. Reverting (A) leaves the renames in history forever and adds four junk commits; each one is a thing a reader has to skip. Committing everything (C) is the instinct this lesson exists to break — the commit always shows the whole project, so whatever is staged is what becomes history. Resetting afterwards (D) rewrites history you probably already pushed, which is Lesson 14's mess, not a step.",
+      "concept": "staging-area"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You amend a commit only to fix a typo in its message. The files in it are byte-identical. What happened to the commit?",
+      "options": [
+        "It became a new commit — its hash is derived from its contents, including the message",
+        "It kept its hash because the files did not change",
+        "It became a dangling commit that git garbage-collects on the next run",
+        "It was replaced by a merge of the old and new commit"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "distractors": [1, 2, 3],
+      "explanation": "The hash covers the tree, the parent, the author, the timestamp and the message, so changing any of it produces a different commit. Option B would mean two different messages could share an identity, which defeats the point of a content address. Option C confuses this with the old commit being unreachable after a reset — amend does not do that. Option D is not a thing git does anywhere.",
+      "concept": "content-addressing"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "A colleague says the repo is bloated because 'git stores every change as a diff'. Why is the concern wrong?",
+      "options": [
+        "Git compresses diffs with zlib, so the storage cost is already negligible",
+        "A commit stores a complete tree; shared parts are found and stored once when objects are packed",
+        "Diff-based storage was removed in git 2.0",
+        "Only the final state of each branch is stored, so intermediate commits cost nothing"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The commit itself names a full tree, not a patch — which is why `git show` works on any commit in isolation and why restoring one file needs no history walk. Packing is where similarity between trees is exploited. Compression (A) is real but it is a different mechanism and it does not make the claim true. Diffs-as-storage were never removed (C), and old commits are not free (D) — that is how `git gc` has work to do at all.",
+      "concept": "tree-not-diff"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "You edited ten lines in one file, two of which belong to a bug fix and eight to an unrelated cleanup. The eight come first in the file. How do you commit just the fix?",
+      "options": [
+        "Commit the file whole, then revert the cleanup in a second commit",
+        "git add -p the file and take only the hunk containing the fix",
+        "Split the file into two files, commit one, then move it back",
+        "Stage the whole file, then use git checkout -- <file> to undo the cleanup in the working tree"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "`git add -p` walks the changes in a file and lets you take or skip each one, so the commit draft contains only the fix. Reverting afterwards (A) leaves both in history and adds noise. Splitting files (C) restructures the repo to serve your commit message — a much bigger change than the problem. Option D destroys the cleanup in the working tree without removing it from the staged draft; the commit would still contain it, and the cleanup work would be gone from disk.",
+      "concept": "partial-staging"
     }
   ]
 }

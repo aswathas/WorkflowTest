@@ -1,43 +1,189 @@
 # Commit Is a Photograph, Not a Diff
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can choose exactly what lands in a commit — instead of discovering after
+> the fact that an agent's whole rewrite went in with your one-line fix.
 
 **Type:** Learn
-**Prerequisites:** Lesson 11, Latency, Cost, and Rate Limits
-**Time:** ~30 minutes
+**Prerequisites:** Phase 00, Lesson 2
+**Time:** ~35 minutes
 
 ---
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Put two deliberate files into one commit and leave everything else out
+- Say what a commit actually stores, and where the staging area fits
+- Read any commit's identity back out of its hash
+- Write a commit message a stranger could act on
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+An agent refactored a file for you. It was right about nine files and wrong
+about one. You ran `git add -A && git commit -m "fix parser"` because that is
+the command you know.
+
+Now the commit holds nine files of unrelated refactoring and one fix. Reviewing
+it means reading 400 changed lines to find the three that matter. Reverting it
+means losing the good eight. And there is no way to split it afterwards without
+rewriting history you have already pushed.
+
+Nothing about the situation was hard. The command was just too blunt for a
+mixed bag. One bad commit poisons every commit after it, because nobody can
+cherry-pick your fix without dragging the refactor along.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+Lesson 2 established that a commit is a frozen copy of the whole project. This
+lesson adds the part that gives you control: a commit is **not** the diff. It is
+the whole tree at one moment, and you choose the moment.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+Three places, in order:
+
+```mermaid
+flowchart LR
+    E[Editor / agent wrote files] --> WT[Working tree<br/>live folder on disk]
+    WT -->|git add| IDX[Staging area<br/>the index<br/>your draft]
+    IDX -->|git commit| C[Commit<br/>frozen full tree]
+    C -->|git diff| WT
+```
+
+**Working tree** — the live folder. Everything on disk.
+
+**Staging area** (the index) — a draft. Not history yet, not the folder yet.
+This is the part almost nobody uses deliberately, and it is the whole point of
+this lesson.
+
+**Commit** — a frozen full tree, identified by a hash of its contents.
+
+```bash
+git add src/parser.js test/parser.test.js   # only these two
+git commit -m "fix parser: handle empty input"
+```
+
+You edited eleven files. Two went in. The other nine are still uncommitted and
+still yours.
+
+### A commit stores a tree, not a delta
+
+You have heard "git stores diffs to save space." That is true of the packfile on
+disk and false of what a commit *is*. A commit is a complete snapshot. When two
+commits are stored together, git finds and stores the parts they share.
+
+This matters because it means:
+
+- A commit can be read on its own. `git show` on any commit shows the whole
+  tree at that moment.
+- Restoring one file from any commit needs no history walking.
+- Merging two commits is comparing two complete trees, not applying patches.
+
+### The hash is the content
+
+The commit hash is derived from what is in the commit — the tree, the parent,
+the author, the message, the timestamp. Change any of it, the hash changes.
+Two people who commit identical content with identical messages and timestamps
+get the same hash. Change one character of the message and it is a different
+commit.
+
+```bash
+git cat-file -p HEAD    # what is actually inside a commit: tree, parent, author, message
+git rev-parse HEAD      # the hash
+```
+
+`git cat-file -p` is the command that turns "a commit is a photograph" from a
+phrase into something you can read on screen.
+
+### Why this matters for agents
+
+An agent's output is one blob of mixed change. If you commit the blob, you have
+made the blob permanent and unreviewable. The staging area is where you split
+the blob: the fix in, the refactor out, the unrelated edit left for later.
+
+That is a two-minute operation done *before* the commit. After the commit it is
+`git rebase -i`, which is Lesson 14's territory and much worse.
+
+> **The reframe:** `git add` is not "save my work", it is "put this exact work
+> in the next photograph" — the photograph always shows the whole project, so
+> what you leave out of the staging area is what you keep out of history.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Watch the staging area hold a draft
 
-1. First step.
-2. Second step.
+```bash
+mkdir -p ~/git-drill && cd ~/git-drill
+git init
+printf 'one\n' > a.txt
+printf 'one\n' > b.txt
+printf 'one\n' > c.txt
+git add a.txt
+git status
+```
+
+`a.txt` is staged. `b.txt` and `c.txt` are not. The commit that comes next will
+contain `a.txt`, plus the other two files exactly as they were when the repo
+started — which right now is "untracked", so they will not be in it at all.
+
+✅ You pass when `git status` lists `a.txt` under changes to be committed and
+`b.txt`, `c.txt` under untracked files.
+
+### 2. Commit a partial set
+
+```bash
+git add b.txt
+git commit -m "add a and b"
+git status
+git show --stat HEAD
+```
+
+The commit has two files. `c.txt` is still untracked and the working tree is not
+clean.
+
+✅ You pass when `git show --stat HEAD` lists exactly `a.txt` and `b.txt`, and
+`c.txt` still appears in `git status`.
+
+### 3. Take a commit apart
+
+```bash
+git cat-file -p HEAD
+```
+
+You get a tree hash, a parent line (absent here — first commit), author,
+timestamp, and the message. The commit names its contents.
+
+✅ You pass when you can point at the tree hash line and say that the commit
+does not store changes, it stores a complete tree at that hash.
+
+### 4. See that the message is part of the identity
+
+```bash
+git rev-parse HEAD
+git commit --amend -m "add a and b (typo fix)"
+git rev-parse HEAD
+```
+
+The hash changed. Nothing about the files changed.
+
+✅ You pass when the two hashes differ and you can say why, in one sentence.
+
+### 5. Stage a hunk, not a file
+
+Make a mess in one file: change two unrelated lines.
+
+```bash
+printf 'one\ntwo\nthree\n' > a.txt
+printf 'one\nCHANGED\nthree\n' > a.txt   # two edits in the same file
+git diff                # both changes, unstaged
+git add -p a.txt        # answer y for the first hunk, n for the second
+git diff --cached       # only the first change is staged
+```
+
+✅ You pass when `git diff --cached` shows exactly one of the two changes.
 
 ---
 
@@ -45,17 +191,34 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Command / concept | When you reach for it |
 |---|---|
-| — | — |
+| `git add <file>` | Putting a known-good file into the next commit |
+| `git add -p` | Splitting one file's changes into separate commits |
+| `git status` | Before every commit. Tells staged from unstaged |
+| `git diff --cached` | Seeing the actual draft of the next commit |
+| `git commit -m` | Freezing the draft |
+| `git cat-file -p <sha>` | Seeing what a commit really contains |
+| `git show --stat <sha>` | What a commit touched, without reading it |
+| Commit message | What a stranger needs to decide whether to revert this |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Take any real change you have lying around — a fix, a config edit, anything.
+   Stage only the files that belong to that one thought. Commit them. Leave the
+   rest uncommitted.
+   ✅ You pass when `git show --stat HEAD` lists only the files you meant, and
+   `git status` still shows your other changes as uncommitted.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Write a commit message for a change someone would need to evaluate in six
+   months without asking you. Then amend it. Record both hashes.
+   ✅ You pass when you have two different hashes from two different messages,
+   and a message that names the *what* and the *why*, not the *how*.
+
+3. Use `git add -p` to make two commits out of changes in one file. Compare
+   `git log --oneline -2` against a single commit of both changes.
+   ✅ You pass when the two-commit log has two entries and reverting either one
+   alone is possible without reverting the other.
 
 ---
 
@@ -63,10 +226,24 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| commit | "saving my changes" | A frozen full tree with a message and a parent. Content-addressed. |
+| diff | "the commit" | The *difference* between two trees. Useful to read; never what is stored. |
+| staging area / index | "the thing before the commit" | A draft tree. `git add` edits the draft; `git commit` freezes it. |
+| `git add -p` | "partial staging" | Choose change-by-change inside one file instead of all or nothing. |
+| commit hash | "the commit id" | A digest of the commit's contents. Change any byte, including the message, and it changes. |
+| `--amend` | "fixing the last commit" | Replaces the last commit. Fine locally, disruptive once pushed. |
+| `git revert` | "undo" | New commit that undoes an old one. History stays honest. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**Sign commits.** Nothing in this course requires them, and they are friction
+on Windows setups.
+
+**Rewriting a commit after pushing.** `rebase -i` and `reset` on shared history.
+That is Lesson 14, and Lesson 16 for when you have already done it wrong.
+
+**Commit templates and hooks.** `commit-msg` hooks automate message format. Real
+and worth adding once your messages are consistently good — after this lesson,
+not before.

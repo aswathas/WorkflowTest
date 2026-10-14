@@ -7,21 +7,77 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Recovering Lost Work that needs a new situation, not recall.",
+      "prompt": "You have a bad merge commit on a branch you already pushed. Three people have pulled it. What is the correct undo?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "git revert on the merge commit, so history keeps both the mistake and its correction",
+        "git reset --hard to before the merge and force-push, so the bad commit disappears",
+        "git rebase -i and drop the merge commit, then force-push",
+        "Delete the branch and start it again from main"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "distractors": [1, 2, 3],
+      "explanation": "Shared history means other people already hold the merge commit, so history must be corrected rather than rewritten. `revert` adds an inverse commit and pushes cleanly. Resetting and force-pushing (B) and rebasing and force-pushing (C) both leave everyone else with a history that no longer contains the commit they pulled, which is Lesson 14's rule stated as a concrete failure. Deleting the branch (D) destroys the label everyone is working from, not the merge.",
+      "concept": "revert-on-shared-history"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "An agent just spent twenty minutes editing six files. You want to reset the branch back to yesterday but keep the good edits uncommitted so you can read them. Which reset mode?",
+      "options": [
+        "git reset --hard, because you want a clean slate",
+        "git reset --soft, because the edits were not committed so they are already in your working tree and stay there",
+        "git reset --mixed, because it preserves working tree changes",
+        "git revert, because revert preserves working tree changes"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Working tree contents are untouched by any reset — the mode only decides whether the difference between old and new position stays staged or becomes unstaged. So --soft (B) leaves the six edited files exactly as the agent left them and simply moves the branch label back. `--hard` (A) is the one mode that overwrites tracked files, which is the opposite of what you just asked for. Both `--mixed` and `revert` keep the edits too (C, D), so the question's real answer is that the mode barely matters here — and the option naming it as the reason is the trap.",
+      "concept": "reset-modes"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Someone says a branch's work is gone for good because they ran git branch -D on it and reset --hard twice since. What is the accurate answer?",
+      "options": [
+        "They are gone — garbage collection removes unmerged commits immediately",
+        "They are probably still reachable through the reflog, which records the branch's past positions, until garbage collection runs",
+        "They can be recovered only from the remote, so the work is lost if it was never pushed",
+        "Git keeps every object forever by design, so nothing is ever lost"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The reflog survived both deletions — it records where labels pointed regardless of whether anything references them now. That makes recovery likely, not guaranteed, because garbage collection reclaims unreachable objects eventually. Immediate loss (A) and a remote-only answer (C) both overstate the danger; never-lost (D) understates it, since a long-enough idle period plus gc really does end it. The honest answer is 'probably, and stop doing other destructive commands'.",
+      "concept": "reflog-shelf-life"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "You are about to run git reset --hard on a repo where an agent made an uncommitted change you have not read. What does the lesson say to do first?",
+      "options": [
+        "Run it — committed work is always recoverable through the reflog",
+        "Run git status; if anything is uncommitted, commit it first, even as a WIP commit",
+        "Stash it, which is always the safer alternative to committing",
+        "Copy the files to a temp directory first, which git cannot undo"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The reflog protects commits; uncommitted work lives only in your folder and is not in the object store, so `reset --hard` can destroy it outright — that is the whole distinction. Committing first, even as `wip`, costs one command (B). Stashing (C) also preserves it, but it is not 'always safer' — a stash you forget about is work nobody reads, whereas a WIP commit is visible to everyone. Copying files by hand (D) is the manual version of the same one-command fix.",
+      "concept": "uncommitted-work-has-no-backup"
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "prompt": "Three agents each finished a task in three separate git worktrees. None of them committed. What has actually been produced?",
+      "options": [
+        "Three branches ready to merge, since the worktree branches were separate",
+        "Three folders of work that exist nowhere in history, because nothing was committed",
+        "Three commits on three branches, created automatically when the worktrees closed",
+        "Nothing recoverable, because uncommitted work was never committed"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A branch only exists where a commit exists. No commit means the branches still point at whatever they started from, and the edits are loose files in three folders. This is a real incident from this repo's own history — the work was real and complete and still had nowhere to be merged from. The fix is not a git feature but an instruction: tell every spawned agent to commit (A's premise, C's automation, and D's despair all fail for the same reason).",
+      "concept": "isolation-is-not-a-backup"
     }
   ]
 }

@@ -7,21 +7,62 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Merge and Rebase that needs a new situation, not recall.",
+      "prompt": "You pushed a feature branch and a teammate pulled it. Now you rebase that branch onto main and force-push. What goes wrong for the teammate?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "Nothing — force-push replaces the branch and their next pull reconciles it",
+        "Their existing commits and your rebased ones are different objects with the same changes, so merging both applies the work twice",
+        "Their local branch is deleted when they pull",
+        "The force-push is rejected because the branch has a merge commit"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Rebase gives your commits new parents, so new hashes — while their copy keeps the old ones. Neither git nor the merge machinery knows they are the same change, so a merge of both branches applies it twice. Force-push replacing a branch (A) is exactly the failure: it discards what they had without merging it. Local branches are not deleted by a remote force-push (C), and the push is accepted, not rejected (D).",
+      "concept": "rebasing-shared-history"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "git merge main on your branch reports 'Fast-forward'. What does that tell you?",
+      "options": [
+        "main had no commits your branch did not already contain, so your label slid forward with no merge commit",
+        "main was fully merged into your branch with a merge commit",
+        "Your branch was fast-forwarded to a remote copy of main",
+        "The merge was trivial because the branches touched disjoint files"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "distractors": [1, 2, 3],
+      "explanation": "Fast-forward is specifically the no-join case: one line has no commits the other lacks, so there is nothing to record and no merge commit is created. A merge commit (B) is the opposite outcome. Remote copies are a different concept entirely (C) — Lesson 18. And touching disjoint files (D) is a real thing that helps, but it does not prevent a merge commit when both lines have new commits.",
+      "concept": "fast-forward"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "You started pulling and the merge it triggered made a mess of your history. Which reason is the one the lesson says to act on?",
+      "options": [
+        "git pull always merges; pick the variant explicitly with --rebase or --no-rebase so the choice is yours",
+        "git pull should be configured once in .gitconfig and never thought about again",
+        "Only rebase is safe on a shared branch, merge should never be used",
+        "The mess is unavoidable; the fix is a larger --force flag on push"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 0,
+      "distractors": [1, 2, 3],
+      "explanation": "`pull` is `fetch` plus a join, and the join is the part you should choose out loud. Setting it globally (B) moves the decision somewhere you will forget you made — the same class of bug as letting the default decide. The lesson's rule is directional, not absolute: rebase what you own, merge what others have (C). And force-pushing over it (D) makes the history worse, not the collaboration.",
+      "concept": "pull-is-two-commands"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "A rebase finished and the result is wrong. You have not pushed. What gets the old commits back?",
+      "options": [
+        "git rebase --abort, which rewinds the already-finished rebase",
+        "git revert, which adds a commit undoing the rebase",
+        "The reflog still records where HEAD was before the rebase, so you can reset back to it",
+        "Nothing — once a rebase completes, the original commits no longer exist"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "A rebase moves labels and creates new commits; it deletes nothing, so every prior HEAD position is still in the reflog. `--abort` only applies while the rebase is still running (A). `revert` adds an undo commit on top, which leaves the rebased history in place — a different goal (B). And the originals are emphatically still there (C's neighbour D) — that is why rebasing an unpushed branch is safe enough to recommend.",
+      "concept": "reflog-recovers-rebase"
     }
   ]
 }

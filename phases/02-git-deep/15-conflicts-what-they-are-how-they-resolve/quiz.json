@@ -7,21 +7,62 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Conflicts: What They Are, How They Resolve that needs a new situation, not recall.",
+      "prompt": "A rebase stops on a conflict. You want the version that was on your branch before the rebase started. Which command gets it?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "git checkout --ours <file>, because those changes were yours",
+        "git checkout --theirs <file>, because during a rebase you are the incoming side",
+        "git checkout --ours <file>, followed by git rebase --skip",
+        "Neither works — during a rebase both sides come from your branch"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "During a rebase, HEAD is the branch you are replaying onto, so the side labelled theirs is the one you brought with you. The temptation to reach for `--ours` is exactly the trap (A, and C with a skip that also discards work). Both sides are labelled in the file (D) — read the labels at the top of the conflict rather than relying on which words feel right.",
+      "concept": "ours-theirs-during-rebase"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "A merge left markers in three files and git printed a wall of output. What is the first command to run?",
+      "options": [
+        "git status, then git diff --name-only --diff-filter=U to get the exact unresolved list",
+        "Open each conflicting file and start deleting markers",
+        "git checkout --theirs . to clear everything, then read the diff",
+        "git rebase --continue to skip past the conflict"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "distractors": [1, 2, 3],
+      "explanation": "Get the list before reading files — the terminal output mixes conflicts with progress noise, and `--diff-filter=U` names exactly the paths git still considers unresolved. Deleting markers file by file (B) is what happens next, but starting from a list means you know when you are done. Bulk-taking theirs (C) silently discards your own work, and `--continue` (D) is for a rebase in progress and will not resolve anything here.",
+      "concept": "start-from-the-unresolved-list"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Two branches both changed the same three lines of a config file, in different ways, and neither edit is obsolete. What is the correct resolution?",
+      "options": [
+        "Take ours — the branch you are on is the one being reviewed",
+        "Take theirs — the incoming change is newer and therefore better",
+        "Combine both edits by hand into what the file should actually say, then git add it",
+        "Run git rebase and let git's merge algorithm decide"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "When both edits are real, neither side is the answer — the question is what the file should say, and only you know that. Ours (A) and theirs (B) are preferences dressed as resolutions, and each silently deletes a real change. Rebase (D) applies the same merge machinery and will land on the same conflict; the algorithm was never going to decide this one.",
+      "concept": "conflict-is-a-decision"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "A merge conflicts over package-lock.json, which nobody edits by hand and which conflicts every few weeks. What is the actual fix?",
+      "options": [
+        "Delete the file and regenerate it, committing the result",
+        "Configure a merge driver for it in .gitattributes so git resolves it without markers",
+        "Add it to .gitignore and stop tracking it",
+        "Always resolve it with --ours, since the lock file is machine-written"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The lesson's test is whether a human ever needs to decide anything about this file. For a generated lock file, the answer is no, so a configured merge driver in .gitattributes is the mechanism for that. Deleting it (A) and ignoring it (C) each trade a real problem for a worse one. Always taking ours (D) is not the same thing — it still produces a conflict every time and still needs a human to pick a side, which is precisely the cost you were trying to remove.",
+      "concept": "merge-drivers"
     }
   ]
 }

@@ -7,21 +7,77 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Stashing, and Why Agents Break Things that needs a new situation, not recall.",
+      "prompt": "You stash, switch branches, come back, and the stash pop conflicts. What is the best next move?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "git stash pop again — it will merge the conflict away",
+        "Resolve the conflict in the files, git add them, then drop the stash entry yourself",
+        "git reset --hard to clear the mess and pop again",
+        "git stash drop to get back to a clean tree and start the change over"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A stash entry is a commit, so popping it back into a tree that moved underneath it can conflict. The conflict is now an ordinary merge conflict — resolve it, `git add`, and the entry is redundant. Popping again (A) would hit the same conflict. `reset --hard` (C) throws away the half-finished work the stash existed to protect. Dropping and redoing (D) is the only option that guarantees loss, which is the opposite of why you stashed.",
+      "concept": "pop-vs-apply"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "An agent deletes config.toml, rewrites a source file four times, and adds an unrelated formatter change. You stashed before the run. What do you reach for?",
+      "options": [
+        "git reset --hard, which undoes all three in one command",
+        "git stash pop, which returns the agent's changes so you can review them",
+        "git checkout -- config.toml, restoring only the deleted file and leaving the other changes visible",
+        "Nothing — a stash only protects uncommitted work you made yourself"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "Each shape wants a different response, and a targeted restore of the one destructive change leaves the other two visible for review — which is how you notice scope creep at all. `reset --hard` (A) discards all three including work worth reading. `stash pop` (B) would bring the agent's changes back in rather than remove them. And a stash records whatever the tree held at the time, including agent edits (D) — that is exactly why it is the right pre-run tool.",
+      "concept": "selective-restore"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "An agent's final version of a file looks wrong, and you suspect it improved then got worse across the turn. Where is the evidence of that?",
+      "options": [
+        "Read the file carefully — the comments will show which parts are stale",
+        "git diff against the commit you made before the run, which shows the net change and whether the whole file was rewritten",
+        "Re-run the agent with the same prompt and compare the two results",
+        "git log — the agent commits each step internally"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The final file is one state; the diff against your pre-run commit is the record of what moved. If the diff touches the whole file, you know it thrashed. Comments (A) are unreliable here — an agent's intermediate state rarely left any. Re-running (C) is expensive and proves nothing about the run you are inspecting. And agents do not commit each step (D) — nothing about the loop implies per-step commits, which is the whole reason the pre-run commit matters.",
+      "concept": "thrash"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "You stashed some work, then three weeks later you cannot remember what was in it. How do you look without destroying it?",
+      "options": [
+        "git stash show -p stash@{0}, which diffs the entry without applying or dropping it",
+        "git stash pop, then read it and re-stash if it is not what you want",
+        "git stash drop, which clears the list so the real entries are visible",
+        "git reflog, which lists stashes as well as branch positions"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "distractors": [1, 2, 3],
+      "explanation": "`stash show -p` is the read-only inspection: it prints the diff and leaves the entry exactly where it was. Popping (B) risks a conflict in a tree that moved three weeks ago and removes the entry on success. Dropping (C) is the one thing you definitely do not want when you are trying to find out what is in there. And the reflog is the branch-and-HEAD record — stash entries are not in it (D), which is exactly why `git stash list` and `show` exist.",
+      "concept": "stash-is-a-commit"
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "prompt": "You stash work, then write three new files that were never added. You run a plain git stash and switch branches. What happened to the three files?",
+      "options": [
+        "They were stashed too, since stash captures the whole working tree",
+        "They stayed in the working tree — a plain stash skips untracked files; git stash -u is the variant that includes them",
+        "They were deleted along with the stashed changes",
+        "They were committed to the stash's hidden branch automatically"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A plain stash takes changes to tracked files only. Untracked files are not in git's object store, so they are not in the stash — which means they simply stayed put and are still on disk after the switch. That is the most common stash surprise, and the one that costs you an agent's newly created files. `--stashed` automatic commits (D) are not a thing, and nothing deletes them (C).",
+      "concept": "stash-u"
     }
   ]
 }

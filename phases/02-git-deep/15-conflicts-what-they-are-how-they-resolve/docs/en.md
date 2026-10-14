@@ -1,43 +1,197 @@
 # Conflicts: What They Are, How They Resolve
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can read a conflict, decide what the merged line should say, and commit
+> it — instead of deleting the markers one at a time until git stops shouting.
 
 **Type:** Learn
-**Prerequisites:** Lesson 14, Merge and Rebase
-**Time:** ~30 minutes
+**Prerequisites:** Phase 02, Lessons 13 and 14
+**Time:** ~40 minutes
 
 ---
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Read a conflict's markers and say which side is yours before looking at either
+- Resolve a conflict by picking, by combining, and by discarding — on purpose
+- Use `git checkout --ours` and `--theirs` knowing which is which during a rebase
+- List the unresolved files without scrolling a wall of terminal output
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+You pull. Git prints twelve lines of conflict, you scroll past them, and the
+terminal is full of `<<<<<<<`, `=======`, `>>>>>>>` scattered through three
+files. You do not know which side is yours, which is the incoming change, or
+whether git has already written something it wants you to throw away.
+
+So you pick a side. `git checkout --ours file` — because you remember that
+command from somewhere. Two of the three files now lose their incoming changes
+without anyone noticing. The build passes. You commit.
+
+Three weeks later a feature goes missing in production and the git history says
+you were careful.
+
+A conflict is not a failure of git. It is git declining to guess. The problem
+was never the conflict — it was resolving it by pattern instead of by reading.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+A conflict happens when both sides changed the same region and git cannot prove
+the two intents are compatible. Anywhere git *can* decide — you edited line 3,
+they edited line 40 — it merges silently. Conflicts are the residue, not the
+work.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+Git marks the spot in the file itself:
+
+```text
+<<<<<<< HEAD: feature
+ours = "green"
+=======
+theirs = "greenish"
+>>>>>>> main
+```
+
+Read that carefully, because the words are the trap:
+
+| Word | What it means | Which side |
+|---|---|---|
+| `HEAD:` | your current branch | **ours** |
+| the other label | the branch you merged in | **theirs** |
+
+And the trap: `git checkout --ours` means *ours* = the branch **you are on**
+right now. It does not mean "the change I want". If you are rebasing, "ours"
+and "theirs" flip, because during a rebase you are conceptually the incoming
+side. This is the single most common way people silently discard work.
+
+### Three ways out
+
+```mermaid
+flowchart TD
+    C[Conflict markers in file] --> D{Is this region a text choice<br/>or a logic choice?}
+    D -->|Text: two versions of the same line| M[Delete the markers, keep the correct line]
+    D -->|Both edits are real and belong together| B[Keep both, combine by hand]
+    D -->|One side is obsolete| O[Take one side deliberately<br/>then verify the surrounding code]
+    M --> S[git add the file]
+    B --> S
+    O --> S
+    S --> F[git rebase --continue / git commit]
+```
+
+A conflict is a decision, not a merge algorithm's leftover work. The three
+outcomes are: pick, combine, discard — and discarding is legitimate when the
+other side's change is genuinely obsolete, but you have to *decide* it.
+
+### Merge drivers
+
+Git can be told how to merge certain files without markers — common for
+`package-lock.json`, generated code, or structured formats. `.gitattributes` with
+`merge=<driver>` does this. Worth adding when a generated file conflicts
+constantly, noise. Not worth it while you are still learning to read a real
+conflict.
+
+### Conflicts are cheap when commits are small
+
+The real cost of a conflict is proportional to how much has to be re-read. A
+twelve-line conflict on a three-commit branch is a minute. A twelve-line conflict
+between two branches that diverged four hundred commits ago, touching a
+file with business rules in it, is an afternoon.
+
+```bash
+git diff --name-only --diff-filter=U   # exactly which files are unresolved
+```
+
+Start there. Not by scrolling the terminal.
+
+> **The reframe:** conflict markers are not an error to clear — they are git
+> asking one question, *"which of these two intents do you want?"*, and the
+> answer is whatever the file should say, not whatever is easier to delete.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Force a conflict you control
 
-1. First step.
-2. Second step.
+```bash
+cd ~/git-drill
+git switch -c feature
+printf 'color = "green"\n' > theme.txt && git add theme.txt && git commit -m "green"
+git switch main
+printf 'color = "greenish"\n' > theme.txt && git add theme.txt && git commit -m "greenish"
+git switch feature
+git merge main
+```
+
+You now have a real conflict in a one-line file.
+
+✅ You pass when `git status` reports an unmerged path and the file contains
+`<<<<<<<`, `=======`, and `>>>>>>>`.
+
+### 2. Read the labels before you read the sides
+
+```bash
+cat theme.txt
+```
+
+Confirm that `HEAD` is `feature` and that the bottom half is the commit from
+`main`.
+
+✅ You pass when you can state, before looking at which value you prefer, which
+half is yours and which is incoming.
+
+### 3. Resolve by hand and commit
+
+```bash
+printf 'color = "green"\n' > theme.txt
+git add theme.txt
+git commit          # merge commit, conflict resolved
+git status
+```
+
+✅ You pass when the merge commit exists and `git status` reports no unmerged
+paths.
+
+### 4. Take a side deliberately
+
+Redo the conflict, then:
+
+```bash
+git checkout --ours theme.txt    # your branch's version
+git add theme.txt
+git commit
+```
+
+Now do the same with `--theirs`. Both are legitimate. Neither is a default.
+
+✅ You pass when you have committed one version each way, and can say which flag
+produced which result.
+
+### 5. Check what a rebase does to those words
+
+```bash
+git switch feature
+git rebase main
+cat theme.txt     # look at the labels again mid-conflict
+```
+
+During a rebase, `HEAD` is the upstream branch you are replaying onto, so the
+label you expected to be "yours" is not.
+
+✅ You pass when you can point at the labels in the file and say that ours and
+theirs mean the opposite here, and that this is why `git checkout --ours` is
+dangerous during a rebase.
+
+### 6. Use the unresolved-files list
+
+```bash
+git diff --name-only --diff-filter=U
+```
+
+✅ You pass when this lists the conflicted files with no manual scrolling, and
+you start from it next time.
 
 ---
 
@@ -45,17 +199,36 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Command / concept | When you reach for it |
 |---|---|
-| — | — |
+| `<<<<<<< HEAD` | The top half is your current branch |
+| `=======` | Boundary between the two sides |
+| `>>>>>>>` | The bottom half is the branch you merged in |
+| `git checkout --ours <f>` | Take your current branch's version, deliberately |
+| `git checkout --theirs <f>` | Take the incoming version, deliberately |
+| `git diff --name-only --diff-filter=U` | Which files are actually unresolved |
+| `git add <f>` | Marks a file resolved — until then the merge cannot complete |
+| `git merge --abort` | Bail out of an in-progress merge |
+| Ours/theirs flip in rebase | Rebase reverses which side is which. Check the labels, not your memory. |
+| Merge drivers | Generated files that conflict constantly and never need real resolution |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Produce a conflict deliberately on a file with more than one conflicting
+   region. Resolve each region by a different route: one pick, one combine, one
+   discard.
+   ✅ You pass when the merge completes, `git status` is clean, and you can list
+   which region took which route and why.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Resolve a conflict the wrong way on purpose — take `--ours` on a file where
+   the incoming change mattered — and observe what you lost. Revert it.
+   ✅ You pass when you have the reverted state back and a one-line note on what
+   the `--ours` habit costs when used without reading.
+
+3. Set up a rebase conflict. Before resolving, write down which side `HEAD`
+   refers to in the markers. Then check.
+   ✅ You pass when your written answer matched, and you can say why rebase
+   reverses ours and theirs.
 
 ---
 
@@ -63,10 +236,25 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| conflict | "git broke my file" | Both sides changed a region and git declined to guess. The markers are the question. |
+| `ours` | "my change" | The branch **you are on right now**. Not "the change I like". |
+| `theirs` | "their change" | The branch you merged in. Reversed during a rebase. |
+| resolved | "the markers are gone" | The file has been `git add`ed. Until then the merge cannot complete. |
+| unmerged path | "broken file" | A path git still considers unresolved. `git status` names them. |
+| merge driver | "smart merge" | Configured handling for files that should never need human resolution. |
+| `git merge --abort` | "start over" | Returns to the pre-merge state. Only while the merge is in progress. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**Rerere.** Git remembers how you resolved a conflict and replays it next time
+the same one appears. Genuinely useful on long-lived branches. Add it when
+conflicts start costing you repeatedly, not now.
+
+**Resolving submodule and rename/delete conflicts.** Both look exactly like a
+text conflict but are not. Rare, and easier to diagnose once text conflicts
+are boring.
+
+**Manual three-way merges and `git merge-file`.** For when the conflict is in
+your editor rather than in git's. Not on this path.

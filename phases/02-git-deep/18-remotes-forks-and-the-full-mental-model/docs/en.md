@@ -1,43 +1,216 @@
 # Remotes, Forks, and the Full Mental Model
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can look at any repo and say which commits exist only on your machine,
+> which exist on the remote, and which nobody has — and act on the difference.
 
 **Type:** Learn
-**Prerequisites:** Lesson 17, Stashing, and Why Agents Break Things
-**Time:** ~30 minutes
+**Prerequisites:** Phase 02, Lessons 12–17
+**Time:** ~40 minutes
 
 ---
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Say what `origin/main` is, and when it becomes stale
+- List what you have that nobody else has, before every push
+- Set up fork, `origin`, and `upstream` and know which one you may push to
+- Explain what a pull request is, and what part of it is not git
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+You `git push` and it rejects: non-fast-forward. Your colleague pushed first.
+You did not know, because your local `main` looked identical to what you last
+remembered. You now have a choice between force-pushing (which would delete your
+colleague's commit) and something you have to look up.
+
+Then a week later you see `origin/main` and `main` in `git branch -a` and cannot
+say what either one is. You cannot answer "is my work safe?" — which is the only
+question that has ever mattered.
+
+The fix is not a command. It is that git has exactly three categories of commit
+and you have been guessing between them.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+**Remote** — a label pointing at a URL. Not a copy, not a sync. It is just a
+name for somewhere.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+```bash
+git remote -v          # what is it called, where does it point
+git remote add upstream https://github.com/someone/their-repo.git
+```
+
+`origin` is the conventional name for the remote you cloned from. `upstream` is
+the conventional name for the original when you cloned a fork. Both are just
+labels.
+
+**Remote-tracking branch** — `origin/main` is your *last-known record* of what
+`main` looked like on the remote at your last fetch. It updates only when you
+fetch. It is a cached snapshot, and it is what makes the rejection message
+meaningful.
+
+```bash
+git fetch origin       # update the record, change nothing else
+git fetch --all --prune  # every remote, and delete records of deleted branches
+```
+
+`fetch` never touches your working tree or your branches. That is the property
+worth internalising: **you can look at what changed without risking anything.**
+
+**Push** — sending commits your remote does not have. Not a sync. If you have
+pushed and then amended or rebased, the remote still has the old commit, and a
+normal push is rejected.
+
+### The three categories
+
+```mermaid
+flowchart TD
+    R[Your repo] --> L[Local commits<br/>on main or a branch]
+    R --> K[Remote-tracking record<br/>origin/main<br/>what you knew at last fetch]
+    E[Remote<br/>the shared repo] --> K
+    L -->|git push| E
+    E -->|git fetch| K
+    K -->|git merge or rebase| L
+```
+
+| Category | Where it exists | How to see it |
+|---|---|---|
+| Local only | Your machine. Not on the remote. | `git log origin/main..main` |
+| On the remote | Shared with everyone. | `git log main..origin/main` |
+| Nobody has | A local branch nobody pushed | `git branch` with no matching remote |
+
+`git log origin/main..main` — "commits I have that the remote does not" — is the
+single most useful command in this lesson. Before every push on a shared repo,
+run it.
+
+### Fork
+
+A **fork** is your own server-side copy of someone else's repository. You cannot
+push to a repo you do not have write access to. So: fork it, push to your fork,
+open a pull request against theirs.
+
+```mermaid
+sequenceDiagram
+    participant U as Upstream repo
+    participant F as Your fork
+    participant Y as Your machine
+    Note over U: the original
+    Note over F: your server-side copy
+    Note over Y: your clone of F
+    Y->>F: git remote add upstream + fetch
+    F->>U: pull request
+```
+
+Two remotes, two roles: `origin` is yours to push to, `upstream` is theirs. You
+fetch from both and push to only one.
+
+**Pull request** is not a git operation at all. It is a request on a hosting
+site, pointing at a branch. Git does the code motion; the platform does the
+review conversation.
+
+### Force-push
+
+```bash
+git push --force-with-lease    # only if the remote is still where you last saw it
+git push --force               # overwrites whatever is there
+```
+
+`--force-with-lease` refuses if someone else pushed since your last fetch. Plain
+`--force` does not check. Use the lease variant every time, or the plain one
+never.
+
+> **The reframe:** a remote is a place, `origin/main` is your *memory* of that
+> place, and `git log origin/main..main` is the question "what is mine that
+> nobody else has?" — which is the only question you need answered before a
+> push.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Make a remote to push to
 
-1. First step.
-2. Second step.
+A local directory works as a remote — nothing about the mechanism requires a
+hosting site.
+
+```bash
+cd ~/git-drill
+git init --bare ../remote.git
+git remote add origin ../remote.git
+git remote -v
+```
+
+✅ You pass when `git remote -v` shows `origin` pointing at `../remote.git`.
+
+### 2. Push, then look at the two records
+
+```bash
+git push -u origin main
+git branch -a
+git log origin/main..main
+```
+
+`origin/main` now exists. The range is empty — you have nothing the remote
+lacks.
+
+✅ You pass when `git branch -a` lists both `main` and `origin/main`, and the
+`git log origin/main..main` output is empty.
+
+### 3. Simulate a colleague
+
+In the bare repo, clone it elsewhere and push a change:
+
+```bash
+cd ~ && git clone remote.git colleague && cd colleague
+printf 'colleague change\n' > colleague.txt
+git add colleague.txt && git commit -m "colleague work"
+git push origin main
+```
+
+Back in `~/git-drill`, run `git fetch origin` and compare.
+
+✅ You pass when `git log main..origin/main` lists the colleague's commit, and
+you pushed nothing to make it appear.
+
+### 4. See the rejection instead of forcing through
+
+```bash
+cd ~/git-drill
+git push origin main
+```
+
+Rejected. Read the message — it is telling you the remote moved.
+
+✅ You pass when the push is rejected, and you can name the two commits that
+diverge, one on each side.
+
+### 5. Resolve it properly
+
+```bash
+git fetch origin
+git merge origin/main       # or: git rebase origin/main
+git push origin main
+```
+
+✅ You pass when the push succeeds and `git log origin/main..main` is empty
+again.
+
+### 6. Set up a fork relationship
+
+If you have a second remote — upstream:
+
+```bash
+git remote add upstream https://example.com/original.git
+git fetch upstream
+git branch -r                 # origin/* and upstream/*
+```
+
+✅ You pass when `git branch -r` shows both sets of remote-tracking branches, and
+you can say which one you may push to.
 
 ---
 
@@ -45,17 +218,35 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Command / concept | When you reach for it |
 |---|---|
-| — | — |
+| `git remote -v` | "What is this repo connected to?" |
+| `git fetch origin` | Update your record of the remote. Changes nothing else. Safe always. |
+| `git fetch --all --prune` | Update every remote and drop records of deleted branches |
+| `git log origin/main..main` | What do I have that nobody else has? Run before every push |
+| `git push -u origin <branch>` | First push of a new branch, tracking it from then on |
+| `git push --force-with-lease` | After an amend or rebase of pushed work. Refuses if the remote moved |
+| `git push --force` | Overwrites without checking. Almost never what you want |
+| `origin` / `upstream` | Your fork / the original. Just labels |
+| fork | Server-side copy of someone else's repo, so you can push to it |
+| pull request | A review request on the platform. Not a git operation |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Clone something public. Add a remote called `upstream` pointing at the
+   original. Fetch from both.
+   ✅ You pass when `git branch -r` shows two sets, and you can say which remote
+   your push would go to.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Make a local branch, commit to it, and deliberately do not push. Find out,
+   with a command, exactly what is local-only.
+   ✅ You pass when `git log origin/main..<branch>` lists your commits, and you
+   can say what would make them vanish.
+
+3. Force-push something on a repo where someone else has pushed, using plain
+   `--force`. Then recover their work and note the correct command.
+   ✅ You pass when you have their commit back, and you have written down
+   `--force-with-lease` as the answer to "how could I have known".
 
 ---
 
@@ -63,10 +254,29 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| remote | "the copy on GitHub" | A label for a URL. Git does not sync to it automatically. |
+| `origin` | "the remote" | The conventional name for the one you cloned from. Renameable. |
+| `upstream` | "the original" | The conventional name for the original when you cloned a fork. |
+| `origin/main` | "main on the server" | Your cached record of it, from your last fetch. Can be stale. |
+| `git fetch` | "getting updates" | Updates the record only. Never touches your tree or branches. |
+| `git pull` | "getting updates" | `fetch` + a merge or rebase you did not choose. |
+| fork | "a copy I made" | A server-side copy of someone's repo, so you have push access. |
+| pull request | "a git merge" | A review request on the hosting platform. The merge itself is a git operation. |
+| `--force-with-lease` | "safe force push" | Force-push that refuses if the remote moved since your last fetch. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**GitHub-specific workflow** — `gh` CLI, branch protection, required reviews,
+CI status checks. Real, and irrelevant to a repo that has no remote.
+
+**Tags, releases, and `git describe`.** Publishing a version. Comes with
+operational material later.
+
+**Submodules and subtrees.** Embedding another repository's content. A
+different mental model from remotes entirely, and not on this course's path.
+
+**Rebasing your fork's branch onto upstream before a PR.** The single most
+useful habit in real fork workflow, and it is exactly Lesson 14's rebase with
+an `upstream/` prefix. Everything needed is already here.
