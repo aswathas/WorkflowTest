@@ -46,13 +46,14 @@ function workspace(phase) {
 async function author(phase) {
   const dir = workspace(phase);
   console.log(`\n=== ${phase} -> ${dir}`);
-  // `node` by name, not process.execPath: the Windows path under "C:\Program
-  // Files\" is fine without a shell and fatal with one (ENOENT on the space).
+  // 'node' by name, no shell. The Windows install path contains a space
+  // ("C:\Program Files\nodejs\node.exe"); shell:true hands cmd an unquoted
+  // argv and every worker dies ENOENT before it starts.
   const code = await new Promise((resolve) => {
     const child = spawn(
       'node',
       [join(dir, 'scripts', 'write-phase.mjs'), phase],
-      { cwd: dir, stdio: 'inherit', shell: true },
+      { cwd: dir, stdio: 'inherit', shell: false },
     );
     child.on('close', resolve);
     child.on('error', () => resolve(-1));
