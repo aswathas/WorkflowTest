@@ -106,5 +106,6 @@ Check:
 - [ ] `node scripts/validate-lessons.mjs` exits 0
 - [ ] `node scripts/workflow-status.mjs` exits 0 (no scaffolds left)
 - [ ] `node scripts/build-site.mjs --check` exits 0 (site matches the corpus)
+- [ ] `node scripts/check-contrast.mjs` exits 0 (palette readable in both themes)
 - [ ] Every worker committed; nothing is sitting uncommitted in a worktree
 - [ ] `git worktree list` shows no leftovers

@@ -50,6 +50,9 @@ jobs:
       - name: Rebuild the site from the corpus
         run: node scripts/build-site.mjs
 
+      - name: Check the palette is readable
+        run: node scripts/check-contrast.mjs
+
       - name: Fail if the committed site was stale
         run: node scripts/build-site.mjs --check
 

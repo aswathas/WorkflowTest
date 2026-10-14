@@ -1,6 +1,9 @@
 /* Harnessing Claude Code — site stylesheet
-   Design tokens copied verbatim from aiengineeringfromscratch.com per the
-   reverse-engineering report. Single source of truth, no preprocessor. */
+   Design system: dotted paper, hard offset shadows, a pixel display face, and
+   one accent colour. The palette is "Void & Violet" — a violet accent on cool
+   neutrals — chosen to replace the one this repo was originally reverse-
+   engineered against, so the site is not a colour-for-colour copy.
+   Single source of truth, no preprocessor. */
 
 :root {
   /* fonts */
@@ -9,28 +12,35 @@
   --font-mono:    'JetBrains Mono', ui-monospace, 'Consolas', monospace;
   --font-heading: var(--font-display);
 
-  /* light theme */
-  --bg:               #fafaf5;
-  --bg-surface:       #f3f1e8;
-  --bg-surface-hover: #ece9dc;
-  --ink:              #1a1a1a;
-  --ink-soft:         #4a4a4a;
-  --ink-mute:         #7a7a78;
-  --rule:             #1a1a1a;
-  --rule-soft:        rgba(26, 26, 26, 0.16);
-  --paper-rule:       rgba(26, 26, 26, 0.08);
-  --blueprint:        #3553ff;
-  --blueprint-tint:        rgba(53, 83, 255, 0.08);
-  --blueprint-tint-strong: rgba(53, 83, 255, 0.18);
-  --status-complete:      #3553ff;
-  --status-in-progress:   #4a4a4a;
-  --status-planned:       #b8b6ad;
-  --warn:           #b8870f;
-  --code-bg:        #efece0;
-  --modal-bg:       #fafaf5;
-  --overlay-bg:     rgba(26, 26, 26, 0.55);
-  --header-bg:      rgba(250, 250, 245, 0.94);
-  --accent-hover:   #2840d6;
+  /* light theme — Void & Violet.
+     The tokens below replace a palette that was copied from the reference site
+     this repo was reverse-engineered against. The structure (dotted paper,
+     hard shadows, VT323 display face) is unchanged; only the colours moved. */
+  --bg:               #f6f4fb;
+  --bg-surface:       #eae5f7;
+  --bg-surface-hover: #ded6f2;
+  --ink:              #17122a;
+  --ink-soft:         #574d78;
+  --ink-mute:         #6a6089;
+  --rule:             #17122a;
+  --rule-soft:        rgba(23, 18, 42, 0.16);
+  --paper-rule:       rgba(23, 18, 42, 0.07);
+  --blueprint:        #6d28d9;
+  --blueprint-tint:        rgba(109, 40, 217, 0.09);
+  --blueprint-tint-strong: rgba(109, 40, 217, 0.20);
+  --status-complete:      #6d28d9;
+  --status-in-progress:   #574d78;
+  --status-planned:       #c3bcd8;
+  --warn:           #8a6d0b;
+  --code-bg:        #e9e4f6;
+  --modal-bg:       #f6f4fb;
+  --overlay-bg:     rgba(23, 18, 42, 0.55);
+  --header-bg:      rgba(246, 244, 251, 0.94);
+  --accent-hover:   #5b21b6;
+  /* Text on a filled accent. White works on the light-mode violet; on the
+     dark-mode violet (a light colour) it does not — 2.72:1 — so dark mode
+     flips it to near-black. */
+  --on-accent:      #ffffff;
 
   /* semantic aliases */
   --text:        var(--ink);
@@ -60,23 +70,28 @@
 }
 
 [data-theme="dark"] {
-  --bg:               #0a0d1a;
-  --bg-surface:       #131830;
-  --bg-surface-hover: #1b2244;
-  --ink:              #e8e6dc;
-  --ink-soft:         #a8a6a0;
-  --ink-mute:         #7a7878;
-  --rule:             #e8e6dc;
-  --rule-soft:        rgba(232, 230, 220, 0.18);
-  --paper-rule:       rgba(232, 230, 220, 0.08);
-  --blueprint:        #6b8eff;
-  --blueprint-tint:        rgba(107, 142, 255, 0.12);
-  --blueprint-tint-strong: rgba(107, 142, 255, 0.22);
-  --code-bg:        #131830;
-  --modal-bg:       #0f1424;
-  --overlay-bg:     rgba(10, 13, 26, 0.78);
-  --header-bg:      rgba(10, 13, 26, 0.94);
-  --accent-hover:   #8aa5ff;
+  --bg:               #0e0b16;
+  --bg-surface:       #181229;
+  --bg-surface-hover: #211a38;
+  --ink:              #e7e2f6;
+  --ink-soft:         #a69dc7;
+  --ink-mute:         #877eab;
+  --rule:             #e7e2f6;
+  --rule-soft:        rgba(231, 226, 246, 0.20);
+  --paper-rule:       rgba(231, 226, 246, 0.07);
+  --blueprint:        #a78bfa;
+  --blueprint-tint:        rgba(167, 139, 250, 0.14);
+  --blueprint-tint-strong: rgba(167, 139, 250, 0.26);
+  --status-complete:      #a78bfa;
+  --status-in-progress:   #a69dc7;
+  --status-planned:       #4a4168;
+  --warn:           #d9b34a;
+  --code-bg:        #1c1533;
+  --modal-bg:       #130f22;
+  --overlay-bg:     rgba(14, 11, 22, 0.78);
+  --header-bg:      rgba(14, 11, 22, 0.94);
+  --accent-hover:   #c4b0ff;
+  --on-accent:      #140f24;
 }
 
 * { box-sizing: border-box; }
@@ -131,7 +146,7 @@ pre code { background: none; padding: 0; }
 /* ── skip link ───────────────────────────────────────────────────────────── */
 .skip {
   position: absolute; left: -9999px; top: 0; z-index: 50;
-  background: var(--blueprint); color: #fff; padding: 0.6em 1em;
+  background: var(--blueprint); color: var(--on-accent); padding: 0.6em 1em;
 }
 .skip:focus { left: 0; }
 
@@ -311,11 +326,11 @@ aside.callout {
 
 /* ── buttons ─────────────────────────────────────────────────────────────── */
 button { font: inherit; background: none; border: 0; cursor: pointer; color: inherit; }
-button.primary { background: var(--blueprint); color: #fff; padding: 0.5em 1em; box-shadow: var(--shadow-hard); }
+button.primary { background: var(--blueprint); color: var(--on-accent); padding: 0.5em 1em; box-shadow: var(--shadow-hard); }
 button.primary:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 
 a.button {
-  display: inline-block; background: var(--blueprint); color: #fff;
+  display: inline-block; background: var(--blueprint); color: var(--on-accent);
   text-decoration: none; padding: 0.55em 1.1em;
   box-shadow: var(--shadow-hard); font-family: var(--font-mono);
   font-size: 0.86rem; letter-spacing: 0.02em;

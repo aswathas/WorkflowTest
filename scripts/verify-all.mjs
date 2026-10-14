@@ -48,7 +48,12 @@ add('every phase passes validate-lessons.mjs', bad.length === 0, bad.join('; '))
 const site = run('build-site.mjs', ['--check']);
 add('site is not stale', site.status === 0, (site.stderr || '').split('\n').slice(0, 4).join(' | '));
 
-// ── 4. corpus consistency ───────────────────────────────────────────────────
+// ── 4. the palette is readable in both themes ───────────────────────────────
+const contrast = run('check-contrast.mjs', []);
+add('palette clears WCAG AA in both themes', contrast.status === 0,
+  (contrast.stdout || '').split('\n').filter((l) => l.includes('✗') || /worst/.test(l)).join(' | '));
+
+// ── 5. corpus consistency ───────────────────────────────────────────────────
 const problems = [];
 let lessons = 0;
 for (const { phase } of gaps) {
