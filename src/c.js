@@ -1,4 +1,4 @@
-// Part C: array utilities — TODO implement
+// Part C: array utilities
 export function sum(arr) {
-  throw new Error("not implemented");
+  return arr.reduce((a, b) => a + b, 0);
 }
