@@ -22,10 +22,13 @@ const git = (...args) =>
 // A phase whose lessons are still template skeletons is unwritten. Validating
 // alone isn't enough: the validator passes skeletons, which is exactly how 118
 // unwritten lessons sat in the tree looking finished.
+//
+// `git grep -q` exits 0 on a hit but prints nothing, so stdout is empty either
+// way. Read the exit code. No shell: it eats the backtick in the pattern.
 const authored = (phase) =>
-  !spawnSync('git', ['grep', '-lq', 'Skeleton. `/write-lesson`', '--', `phases/${phase}`], {
-    cwd: ROOT, encoding: 'utf8', shell: true,
-  }).stdout.trim();
+  spawnSync('git', ['grep', '-q', 'Skeleton. `/write-lesson`', '--', `phases/${phase}`], {
+    cwd: ROOT,
+  }).status !== 0;
 
 const phases = readdirSync(join(ROOT, 'phases'))
   .sort()
