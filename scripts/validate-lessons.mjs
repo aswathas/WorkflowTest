@@ -113,9 +113,10 @@ for (const { phase, lesson, dir } of lessons) {
     problems.push(`${label}: contains an unfilled authoring placeholder`);
   }
 
-  // Structure is not authorship — reject an unwritten scaffold.
-  for (const [re, why] of SKELETON) {
-    if (re.test(md)) problems.push(`${label}: ${why}`);
+  // Structure is not authorship — reject an unwritten scaffold. One report per
+  // lesson: three hits means one unwritten lesson, not three separate defects.
+  if (SKELETON.some(([re]) => re.test(md))) {
+    problems.push(`${label}: unwritten scaffold — run /write-lesson`);
   }
 
   // Grounding: ungrounded forward references.
