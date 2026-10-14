@@ -1,4 +1,4 @@
-// Part B: number utilities — TODO implement
+// Part B: number utilities
 export function double(n) {
-  throw new Error("not implemented");
+  return n * 2;
 }
