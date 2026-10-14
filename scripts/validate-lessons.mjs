@@ -85,9 +85,12 @@ for (const { phase, lesson, dir } of lessons) {
     problems.push(`${label}: has ${reframes.length} explicit reframes, template requires exactly 1`);
   }
 
-  // Every exercise needs an observable pass criterion.
-  const exerciseCount = (md.match(/^\s*\d+\.\s/gm) ?? []).length;
-  const criteria = md.match(CRITERION) ?? [];
+  // Every exercise needs an observable pass criterion. Scoped to the Exercises
+  // section — "Build It" also uses a numbered list, and counting those says
+  // nothing about whether exercises are checkable.
+  const exercisesSection = /^## Exercises\b([\s\S]*?)(?=^## |\Z)/m.exec(md)?.[1] ?? '';
+  const exerciseCount = (exercisesSection.match(/^\s*\d+\.\s/gm) ?? []).length;
+  const criteria = exercisesSection.match(CRITERION) ?? [];
   if (exerciseCount > 0 && criteria.length < exerciseCount) {
     problems.push(`${label}: ${exerciseCount} exercises but ${criteria.length} pass criteria (✅ "You pass when…")`);
   }

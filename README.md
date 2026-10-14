@@ -2,7 +2,7 @@
 
 **From zero to graph engineering on AI agents — for people who use them.**
 
-A free, open-source course. 119 lessons across 20 phases on using AI agents well:
+A free, open-source course. 119 lessons across 19 phases on using AI agents well:
 subagents, agent teams, MCP servers, hooks, plugins, worktree isolation, dynamic
 workflows, harness engineering, and task graphs.
 

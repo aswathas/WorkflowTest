@@ -1,0 +1,27 @@
+{
+  "lesson": "15-graph-engineering/105-design-a-graph-for-a-real-project",
+  "title": "Design a Graph for a Real Project",
+  "version": 1,
+  "passingScore": 3,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "prompt": "Replace with a question about Design a Graph for a Real Project that needs a new situation, not recall.",
+      "options": [
+        "Replace me",
+        "Replace me",
+        "Replace me",
+        "Replace me"
+      ],
+      "answer": 0,
+      "distractors": [
+        1,
+        2,
+        3
+      ],
+      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
+      "concept": "replace-me"
+    }
+  ]
+}

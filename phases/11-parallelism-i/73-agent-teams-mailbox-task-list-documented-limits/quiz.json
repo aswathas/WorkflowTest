@@ -1,0 +1,27 @@
+{
+  "lesson": "11-parallelism-i/73-agent-teams-mailbox-task-list-documented-limits",
+  "title": "Agent Teams — Mailbox, Task List, Documented Limits",
+  "version": 1,
+  "passingScore": 3,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "prompt": "Replace with a question about Agent Teams — Mailbox, Task List, Documented Limits that needs a new situation, not recall.",
+      "options": [
+        "Replace me",
+        "Replace me",
+        "Replace me",
+        "Replace me"
+      ],
+      "answer": 0,
+      "distractors": [
+        1,
+        2,
+        3
+      ],
+      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
+      "concept": "replace-me"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "lesson": "09-plugins/64-plugin-economics-what-every-enabled-plugin-costs",
+  "title": "Plugin Economics — What Every Enabled Plugin Costs",
+  "version": 1,
+  "passingScore": 3,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "prompt": "Replace with a question about Plugin Economics — What Every Enabled Plugin Costs that needs a new situation, not recall.",
+      "options": [
+        "Replace me",
+        "Replace me",
+        "Replace me",
+        "Replace me"
+      ],
+      "answer": 0,
+      "distractors": [
+        1,
+        2,
+        3
+      ],
+      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
+      "concept": "replace-me"
+    }
+  ]
+}

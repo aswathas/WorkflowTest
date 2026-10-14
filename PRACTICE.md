@@ -1,6 +1,6 @@
 # Practice
 
-Sixteen modules. One per phase that has something worth building.
+Nineteen modules. One per phase that has something worth building.
 
 A module is **not** done when code runs. It's done when the rubric's criteria are
 met and you can explain the mechanism with the code closed.

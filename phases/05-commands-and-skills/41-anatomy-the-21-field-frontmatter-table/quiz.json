@@ -1,0 +1,27 @@
+{
+  "lesson": "05-commands-and-skills/41-anatomy-the-21-field-frontmatter-table",
+  "title": "Anatomy — the 21-Field Frontmatter Table",
+  "version": 1,
+  "passingScore": 3,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "prompt": "Replace with a question about Anatomy — the 21-Field Frontmatter Table that needs a new situation, not recall.",
+      "options": [
+        "Replace me",
+        "Replace me",
+        "Replace me",
+        "Replace me"
+      ],
+      "answer": 0,
+      "distractors": [
+        1,
+        2,
+        3
+      ],
+      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
+      "concept": "replace-me"
+    }
+  ]
+}

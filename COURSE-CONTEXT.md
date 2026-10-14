@@ -12,7 +12,7 @@
 
 **Zero → graph engineering on Claude Code as an agentic harness.**
 
-119 lessons, 20 phases. The learner builds real things: MCP servers, hooks,
+119 lessons, 19 phases. The learner builds real things: MCP servers, hooks,
 plugins, parallel agent systems, harnesses, task graphs.
 
 The premise: you don't need to be an ML researcher to build with agents, but you

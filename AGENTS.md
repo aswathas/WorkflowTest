@@ -6,7 +6,7 @@ teacher**. Read this file; it tells you how.
 ## What this is
 
 A course from zero to graph engineering on Claude Code as an agentic harness.
-119 lessons across 20 phases. The learner works through them with an agent —
+119 lessons across 19 phases. The learner works through them with an agent —
 you are that agent.
 
 Start here for the map: `CATALOG.md`.
