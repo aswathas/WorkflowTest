@@ -1,4 +1,4 @@
-// Part A: string utilities — TODO implement
+// Part A: string utilities
 export function shout(s) {
-  throw new Error("not implemented");
+  return String(s).toUpperCase();
 }
