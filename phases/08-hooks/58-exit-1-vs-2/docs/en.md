@@ -9,6 +9,15 @@
 
 ---
 
+## Learning Objectives
+
+- Say which of the three exit codes means "block" and which means "crashed"
+- Predict, from the event's name alone, whether exit 2 will stop the action
+- Choose a fail-open or fail-closed failure mode deliberately, and write it down
+- Explain why a guardrail that fails open is the more dangerous default
+
+---
+
 ## The Problem
 
 Your guardrail is correct. The script reads the command, sees `rm -rf`, decides

@@ -10,6 +10,15 @@
 
 ---
 
+## Learning Objectives
+
+- Debug a silent hook in the order it actually fails: registration, matcher, payload, exit code, event
+- Tell a matcher bug from a payload bug from a wiring bug
+- Test a hook without Claude Code by piping a fabricated event into it
+- Read `claude --debug` for registration, matcher evaluation, skips, and crashes
+
+---
+
 ## The Problem
 
 Your guardrail doesn't work. The agent ran `git push` and nothing happened. Or
