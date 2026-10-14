@@ -6,15 +6,14 @@
 //   * index surfaces — index.html, catalog.html, glossary.html, sitemap.xml,
 //     llms.txt, all generated from the same pass
 //
-// The index surfaces used to be hand-written, and they rotted the moment the
-// corpus moved: catalog.html listed four phases and claimed "20 phases",
-// llms.txt claimed 16 practice modules, and every page linked to
-// prereqs.html, glossary.html and about.html, none of which existed. Anything
-// that can be derived is now derived, so it cannot drift again.
-//
-// Design classes (site/container/lesson-meta-tag/lesson-motto/status-square/
-// ascii-rule) come from site/style.css and are reused verbatim — this script
-// generates content, not a new look.
+// Three things this file used to get wrong, all of them visible:
+//   1. It wrote the markdown into a <pre> tag. A lesson rendered as its own
+//      source. There is now a real markdown renderer.
+//   2. Lesson pages linked ../../../style.css. A page lives at
+//      site/phases/NN-phase/NN-slug.html, so three levels up is the repo root,
+//      not site/ — every lesson loaded no stylesheet at all. Depth is computed
+//      now, not guessed.
+//   3. The index surfaces were hand-written and rotted. They are generated.
 //
 // Usage:  node scripts/build-site.mjs [--check]
 //   --check  render nothing; exit 1 if a generated page would change
@@ -32,20 +31,152 @@ const SITE_NAME = 'Harnessing Claude Code';
 const SITE_TAGLINE = 'From zero to graph engineering on AI agents — for people who use them.';
 const CANONICAL = 'https://harnessing.example';
 
-// Scaffold markers. Same set the validator and scripts/lib/workflow-lib.mjs use.
 const LESSON_SKELETON = [/^\s*>\s*Skeleton\./m, /Replace this placeholder/];
 const BRIEF_SKELETON = [/Fill this in/, /\[your artifact \+ evidence\]/];
 const RUBRIC_SKELETON = [/\|\s*2\s*\|\s*Fill in\s*\|/];
 
-const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const esc = (s) => String(s ?? '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// ── inline markdown ─────────────────────────────────────────────────────────
+function inline(s) {
+  let t = esc(s);
+  // Code first: its contents must not be read as emphasis or links.
+  t = t.replace(/`([^`]+)`/g, (_, c) => `\u0000${c}\u0001`);
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, txt, href) => {
+    const external = /^https?:/i.test(href);
+    return `<a href="${href}"${external ? ' target="_blank" rel="noopener"' : ''}>${txt}</a>`;
+  });
+  t = t.replace(/\u0000([\s\S]*?)\u0001/g, (_, c) => `<code>${c}</code>`);
+  return t;
+}
+
+const isBlockStart = (l) =>
+  /^(#{1,6})\s/.test(l) || /^```/.test(l) || /^>\s?/.test(l) || /^\|/.test(l) ||
+  /^\s*([-*]|\d+\.)\s/.test(l) || /^---+\s*$/.test(l);
+
+// ── block markdown ──────────────────────────────────────────────────────────
+function mdToHtml(src) {
+  const lines = src.split(/\r?\n/);
+  const out = [];
+  const para = [];
+  const flush = () => {
+    if (para.length) { out.push(`<p>${inline(para.join(' '))}</p>`); para.length = 0; }
+  };
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // fenced code
+    const fence = line.match(/^```(\S*)\s*$/);
+    if (fence) {
+      flush();
+      const lang = fence[1] || '';
+      const buf = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      if (lang === 'mermaid') {
+        out.push(`<figure class="diagram"><pre>${esc(buf.join('\n'))}</pre>`
+          + `<figcaption>Mermaid source — renders as a diagram where mermaid.js is available</figcaption></figure>`);
+      } else {
+        out.push(`<pre class="code"${lang ? ` data-lang="${esc(lang)}"` : ''}><code>${esc(buf.join('\n'))}</code></pre>`);
+      }
+      continue;
+    }
+
+    // heading (the H1 is rendered by the page shell, not here)
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      flush();
+      const lvl = h[1].length;
+      if (lvl > 1) {
+        const text = h[2];
+        const slug = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        out.push(`<h${lvl} id="${slug}">${inline(text)}</h${lvl}>`);
+      }
+      i++;
+      continue;
+    }
+
+    if (/^---+\s*$/.test(line)) { flush(); out.push('<hr>'); i++; continue; }
+
+    // table
+    if (/^\|/.test(line) && /^\|[\s:|-]+\|?\s*$/.test(lines[i + 1] ?? '')) {
+      flush();
+      const cells = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+      const head = cells(line);
+      const rows = [];
+      i += 2;
+      while (i < lines.length && /^\|/.test(lines[i])) { rows.push(cells(lines[i])); i++; }
+      out.push('<div class="table-wrap"><table><thead><tr>'
+        + head.map((c) => `<th>${inline(c)}</th>`).join('')
+        + '</tr></thead><tbody>'
+        + rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')
+        + '</tbody></table></div>');
+      continue;
+    }
+
+    // blockquote
+    if (/^>\s?/.test(line)) {
+      flush();
+      const buf = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) { buf.push(lines[i].replace(/^>\s?/, '').trim()); i++; }
+      const inner = buf.filter(Boolean);
+      out.push(`<blockquote>${inner.map((l) => `<p>${inline(l)}</p>`).join('')}</blockquote>`);
+      continue;
+    }
+
+    // list (collect first, then emit, so continuation lines land inside the item)
+    if (/^\s*([-*]|\d+\.)\s+/.test(line)) {
+      flush();
+      const items = [];
+      while (i < lines.length) {
+        const m = lines[i].match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
+        if (m) {
+          items.push({ indent: m[1].length, ordered: /\d/.test(m[2]), text: m[3] });
+          i++;
+          continue;
+        }
+        const t = lines[i].trim();
+        if (items.length && t && !isBlockStart(lines[i])) { items[items.length - 1].text += ' ' + t; i++; continue; }
+        break;
+      }
+      const html = [];
+      const stack = [];
+      for (const it of items) {
+        while (stack.length && it.indent < stack[stack.length - 1].indent) {
+          html.push(`</li></${stack.pop().tag}>`);
+        }
+        if (stack.length && it.indent === stack[stack.length - 1].indent) {
+          html.push('</li>');
+        } else if (!stack.length || it.indent > stack[stack.length - 1].indent) {
+          const tag = it.ordered ? 'ol' : 'ul';
+          stack.push({ indent: it.indent, tag });
+          html.push(`<${tag}>`);
+        }
+        const crit = /✅/.test(it.text);
+        html.push(`<li${crit ? ' class="criterion"' : ''}>${inline(it.text)}`);
+      }
+      while (stack.length) html.push(`</li></${stack.pop().tag}>`);
+      out.push(html.join(''));
+      continue;
+    }
+
+    if (!line.trim()) { flush(); i++; continue; }
+
+    para.push(line.trim());
+    i++;
+  }
+  flush();
+  return out.join('\n');
+}
 
 // ── read the corpus ─────────────────────────────────────────────────────────
 function readCatalog() {
-  // CATALOG.md is the source of phase names, lesson titles and practice modules.
-  // Three machine-read shapes (they are documented at the top of the file):
-  //   ## Phase NN — Name          (next non-empty line is the one-line thesis)
-  //   | N | Title | `path` |      (title may be **bolded** to mark load-bearing)
-  //   **Module NN.N** — Title (`Type`)   then   → `practice/NN-slug`
   const text = readFileSync(join(ROOT, 'CATALOG.md'), 'utf8');
   const lines = text.split(/\r?\n/);
   const phases = [];
@@ -64,9 +195,8 @@ function readCatalog() {
       awaitingThesis = true;
       continue;
     }
-    if (awaitingThesis && line.startsWith('## ')) { awaitingThesis = false; } // next phase already handled
     if (awaitingThesis && line && !line.startsWith('|') && !line.startsWith('**Module')) {
-      phase.thesis = line.replace(/^Prereq:.*$/, '').trim();
+      phase.thesis = line.trim();
       awaitingThesis = false;
       continue;
     }
@@ -75,10 +205,9 @@ function readCatalog() {
     if (row && phase) {
       const title = row[2].replace(/\*\*/g, '').replace(/\s+—\s+.*$/, '').trim();
       const gloss = (row[2].match(/—\s+(.+)$/)?.[1] ?? '').replace(/\*\*/g, '').trim();
-      const path = row[3];
-      const [phaseSlug, lessonSlug] = path.split('/');
+      const [phaseSlug, lessonSlug] = row[3].split('/');
       if (!phase.slug) phase.slug = phaseSlug;
-      phase.lessons.push({ num: Number(row[1]), title, gloss, path, phaseSlug, lessonSlug });
+      phase.lessons.push({ num: Number(row[1]), title, gloss, phaseSlug, lessonSlug });
       continue;
     }
 
@@ -92,7 +221,6 @@ function readCatalog() {
       currentModule.dir = line.replace(/^→\s*`?/, '').replace(/`$/, '').trim();
       if (phase) phase.module = currentModule;
       awaitingModule = false;
-      continue;
     }
   }
   return phases.filter((p) => p.slug && p.lessons.length);
@@ -114,19 +242,43 @@ function moduleStatus(dir) {
   return 'authored';
 }
 
+function readLesson(dir) {
+  const text = readFileSync(join(dir, 'docs', 'en.md'), 'utf8');
+  const lines = text.split(/\r?\n/);
+  const meta = { title: 'Untitled', type: null, prereq: null, time: null, hook: null };
+  let i = 0;
+  for (; i < lines.length; i++) if (lines[i].startsWith('# ')) { meta.title = lines[i].slice(2).trim(); i++; break; }
+  for (; i < lines.length; i++) { const l = lines[i].trim(); if (l.startsWith('>')) { meta.hook = l.replace(/^>\s*/, ''); i++; break; } }
+  for (; i < lines.length; i++) {
+    const l = lines[i].trim();
+    if (l.startsWith('**Type:**')) meta.type = l.replace(/^\*\*Type:\*\*\s*/, '');
+    if (l.startsWith('**Prerequisites:**')) meta.prereq = l.replace(/^\*\*Prerequisites:\*\*\s*/, '');
+    if (l.startsWith('**Time:**')) meta.time = l.replace(/^\*\*Time:\*\*\s*/, '');
+    if (l.startsWith('## ')) break;
+  }
+  // The hook may run over two lines; join the continuation.
+  const rest = lines.slice(i).join('\n');
+  return { meta, body: rest };
+}
+
+function readQuiz(dir) {
+  const p = join(dir, 'quiz.json');
+  if (!existsSync(p)) return [];
+  try { return JSON.parse(readFileSync(p, 'utf8')).questions ?? []; } catch { return []; }
+}
+
 function loadCurriculum() {
   const phases = readCatalog();
   for (const p of phases) {
     for (const l of p.lessons) {
-      const dir = join(ROOT, 'phases', l.phaseSlug, l.lessonSlug);
-      l.dir = dir;
-      l.status = lessonStatus(dir);
+      l.dir = join(ROOT, 'phases', l.phaseSlug, l.lessonSlug);
+      l.status = lessonStatus(l.dir);
       l.outPath = `phases/${l.phaseSlug}/${l.lessonSlug}.html`;
-      const md = join(dir, 'docs', 'en.md');
+      l.url = `phases/${l.phaseSlug}/${l.lessonSlug}.html`;
       if (l.status === 'authored') {
-        const body = readFileSync(md, 'utf8');
-        const m = body.match(/^#\s+(.*)$/m);
-        l.title = m ? m[1].trim() : l.title; // the file wins over the catalog
+        const { meta } = readLesson(l.dir);
+        l.title = meta.title;
+        l.hook = meta.hook;
       }
     }
     p.moduleStatus = moduleStatus(p.module?.dir);
@@ -140,32 +292,19 @@ function loadCurriculum() {
   return phases;
 }
 
-// ── lesson page ─────────────────────────────────────────────────────────────
-function readLesson(path) {
-  const text = readFileSync(path, 'utf8');
-  const lines = text.split('\n');
-  const meta = { title: 'Untitled', type: null, prereq: null, time: null, hook: null };
-  let i = 0;
-  for (; i < lines.length; i++) if (lines[i].startsWith('# ')) { meta.title = lines[i].slice(2).trim(); i++; break; }
-  for (; i < lines.length; i++) { const l = lines[i].trim(); if (l.startsWith('>')) { meta.hook = l.replace(/^>\s*/, ''); i++; break; } }
-  for (; i < lines.length; i++) {
-    const l = lines[i].trim();
-    if (l.startsWith('**Type:**')) meta.type = l.replace(/^\*\*Type:\*\*\s*/, '');
-    if (l.startsWith('**Prerequisites:**')) meta.prereq = l.replace(/^\*\*Prerequisites:\*\*\s*/, '');
-    if (l.startsWith('**Time:**')) meta.time = l.replace(/^\*\*Time:\*\*\s*/, '');
-    if (l.startsWith('## ')) break;
-  }
-  return { meta, body: lines.slice(i).join('\n') };
-}
-
+// ── page shell ──────────────────────────────────────────────────────────────
 const NAV = [
   ['catalog.html', 'Catalog'],
   ['glossary.html', 'Glossary'],
+  ['developer.html', 'API'],
   ['llms.txt', 'llms.txt'],
-  ['developer.html', 'Developer'],
 ];
 
-function head(title, depth) {
+// Runs before paint so a dark OS preference does not flash light.
+const THEME_SCRIPT = `<script>(function(){var k='hcc-theme',d=document.documentElement;try{var t=localStorage.getItem(k)||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');if(t==='dark')d.dataset.theme='dark';}catch(e){}window.addEventListener('DOMContentLoaded',function(){var b=document.querySelector('[data-theme-toggle]');if(!b)return;b.addEventListener('click',function(){var dark=d.dataset.theme!=='dark';if(dark)d.dataset.theme='dark';else d.removeAttribute('data-theme');try{localStorage.setItem(k,dark?'dark':'light');}catch(e){}});});})();</script>`;
+
+/** depth = how many directories below site/ this page lives. */
+function head(title, depth, description = '') {
   const p = depth ? '../'.repeat(depth) : '';
   return `<!DOCTYPE html>
 <html lang="en">
@@ -173,13 +312,17 @@ function head(title, depth) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} — ${SITE_NAME}</title>
+<meta name="description" content="${esc(description || SITE_TAGLINE)}">
 <link rel="stylesheet" href="${p}style.css">
+${THEME_SCRIPT}
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="site">
   <div class="container">
     <a class="logo" href="${p}index.html">■ HARNESSING CLAUDE CODE</a>
     <nav>${NAV.map(([h, t]) => `<a href="${p}${h}">${esc(t)}</a>`).join('')}</nav>
+    <button class="theme-toggle" data-theme-toggle aria-label="Toggle colour theme" title="Toggle colour theme">◐</button>
   </div>
 </header>
 `;
@@ -187,91 +330,146 @@ function head(title, depth) {
 
 const foot = `</body>\n</html>\n`;
 
-function lessonPage(l) {
-  const { meta, body } = readLesson(join(l.dir, 'docs', 'en.md'));
-  const rel = '../../../'; // site/phases/NN-phase/NN-slug.html
-  return `${head(meta.title, 0).replace(/(href|src)="(?!http)/g, `$1="${rel}`)}
-<article class="lesson-article">
-  <p class="lesson-meta-tag">${esc((meta.type ?? 'LESSON').toUpperCase())}</p>
-  <h1>${esc(meta.title)}</h1>
-  ${meta.hook ? `<p class="lesson-motto">${esc(meta.hook)}</p>` : ''}
+function sidebar(cur, activeLesson) {
+  return cur.map((p) => {
+    const items = p.lessons.map((l) => {
+      const on = activeLesson && activeLesson.phaseSlug === l.phaseSlug && activeLesson.lessonSlug === l.lessonSlug;
+      return `<li${on ? ' class="on"' : ''}><a href="${'../'.repeat(2)}${l.outPath}"><span class="n">${l.num}</span>${esc(l.title)}</a></li>`;
+    }).join('');
+    return `<section${p.slug === activeLesson?.phaseSlug ? ' class="on"' : ''}>
+      <h3>Phase ${p.num} · ${esc(p.name)}</h3>
+      <ul>${items}</ul>
+    </section>`;
+  }).join('\n');
+}
 
-  <div class="lesson-meta-block">
-    <p><strong>Type:</strong> ${esc(meta.type ?? '—')}</p>
-    <p><strong>Prerequisites:</strong> ${esc(meta.prereq ?? '—')}</p>
-    <p><strong>Time:</strong> ${esc(meta.time ?? '—')}</p>
-  </div>
+// ── lesson page ─────────────────────────────────────────────────────────────
+function renderLesson(cur, l, all) {
+  const { meta, body } = readLesson(l.dir);
+  const quiz = readQuiz(l.dir);
+  const idx = all.findIndex((x) => x.outPath === l.outPath);
+  const prev = idx > 0 ? all[idx - 1] : null;
+  const next = idx < all.length - 1 ? all[idx + 1] : null;
+  const p = cur.find((x) => x.slug === l.phaseSlug);
 
-  <div class="ascii-rule"></div>
+  const quizHtml = quiz.length ? `
+  <section class="quiz" id="quiz">
+    <h2>Check yourself</h2>
+    <p class="quiz-note">${quiz.length} question${quiz.length === 1 ? '' : 's'}. Answer before you reveal — recognising the right option is not the same as being able to produce it.</p>
+    <ol class="quiz-list">
+${quiz.map((q, i) => `      <li>
+        <p class="q">${inline(q.prompt ?? '')}</p>
+        <ol class="options" type="A">
+${(q.options ?? []).map((o) => `          <li>${inline(o)}</li>`).join('\n')}
+        </ol>
+        <details>
+          <summary>Show answer</summary>
+          <p class="ans"><strong>${String.fromCharCode(65 + (Number.isInteger(q.answer) ? q.answer : 0))}.</strong> ${inline((q.options ?? [])[q.answer] ?? '')}</p>
+          ${q.explanation ? `<p class="why">${inline(q.explanation)}</p>` : ''}
+        </details>
+      </li>`).join('\n')}
+    </ol>
+  </section>` : '';
 
-  <pre style="white-space:pre-wrap;font-family:var(--font-body);font-size:1rem;line-height:1.62;background:transparent;border:0;padding:0;">${esc(body)}</pre>
-</article>
+  const pager = `<nav class="pager">
+    ${prev ? `<a class="prev" href="${'../'.repeat(2)}${prev.outPath}"><span>Previous</span>${prev.num}. ${esc(prev.title)}</a>` : '<span></span>'}
+    ${next ? `<a class="next" href="${'../'.repeat(2)}${next.outPath}"><span>Next</span>${next.num}. ${esc(next.title)}</a>` : '<span></span>'}
+  </nav>`;
+
+  return `${head(meta.title, 2, meta.hook ?? '')}
+<div class="page">
+  <aside class="toc" aria-label="All lessons">
+    <p class="toc-title">All ${all.length} lessons</p>
+${sidebar(cur, l)}
+  </aside>
+
+  <main id="main" class="reader">
+    <article class="lesson-article">
+      <p class="lesson-meta-tag">${esc((meta.type ?? 'lesson').toUpperCase())} · PHASE ${p?.num ?? '—'} · LESSON ${l.num}</p>
+      <h1>${esc(meta.title)}</h1>
+      ${meta.hook ? `<p class="lesson-motto">${esc(meta.hook)}</p>` : ''}
+
+      <dl class="lesson-meta-block">
+        <div><dt>Type</dt><dd>${esc(meta.type ?? '—')}</dd></div>
+        <div><dt>Prerequisites</dt><dd>${esc(meta.prereq ?? '—')}</dd></div>
+        <div><dt>Time</dt><dd>${esc(meta.time ?? '—')}</dd></div>
+      </dl>
+
+      <div class="ascii-rule"></div>
+
+      <div class="prose">
+${mdToHtml(body)}
+      </div>
+${quizHtml}
+${pager}
+    </article>
+  </main>
+</div>
 ${foot}`;
 }
 
-// ── glossary: aggregate every lesson's Key Terms table ──────────────────────
-function keyTermsOf(l) {
-  if (l.status !== 'authored') return [];
-  const md = readFileSync(join(l.dir, 'docs', 'en.md'), 'utf8');
-  const section = /^## Key Terms\b([\s\S]*?)(?=^## |\Z)/m.exec(md)?.[1] ?? '';
-  return section.split('\n')
-    .map((line) => line.trim())
-    .filter((line) => /^\|/.test(line) && !/^\|\s*-+/.test(line) && !/\|\s*(Term|What people say|What it actually means)\s*\|/i.test(line))
-    .map((line) => line.split('|').slice(1, -1).map((c) => c.trim()))
-    .filter((cells) => cells.length >= 3 && cells[0]);
-}
-
-// ── render the index surfaces ───────────────────────────────────────────────
+// ── index surfaces ──────────────────────────────────────────────────────────
 function renderIndex(cur, totals) {
-  const rows = cur.map((p) => {
-    const sq = `<span class="status-square ${p.status}"></span>`;
-    return `      <li>${sq} <strong>Phase ${p.num} — ${esc(p.name)}.</strong> ${esc(p.thesis)} (${p.authored}/${p.total})</li>`;
-  }).join('\n');
-  return `${head('Home', 0)}
-<main class="container">
-  <section>
+  const cards = cur.map((p) => `
+      <a class="phase-card" href="phases/${p.slug}/${p.lessons[0].lessonSlug}.html">
+        <div class="pc-head">
+          <span class="pc-num">Phase ${p.num}</span>
+          <span class="status-square ${p.status}" title="${p.status}"></span>
+        </div>
+        <h3>${esc(p.name)}</h3>
+        <p>${esc(p.thesis)}</p>
+        <p class="pc-meta">${p.total} lessons${p.module ? ` · module ${esc(p.module.num)} <em>${esc(p.module.type)}</em>` : ''}</p>
+      </a>`).join('\n');
+
+  return `${head('Home', 0, SITE_TAGLINE)}
+<main id="main" class="container">
+  <section class="hero">
     <p class="lesson-meta-tag">HARNESSING / CLAUDE CODE</p>
     <h1>${esc(SITE_TAGLINE)}</h1>
-    <p class="lesson-motto">A free, open-source course. ${totals.lessons} lessons across ${totals.phases} phases. MCP, hooks, plugins, worktree isolation, dynamic workflows, harness engineering, task graphs.</p>
+    <p class="lesson-motto">A free, open-source course. ${totals.lessons} lessons across ${totals.phases} phases, ${totals.modules} graded practice modules. MCP, hooks, plugins, worktree isolation, dynamic workflows, harness engineering, task graphs.</p>
+
+    <p class="hero-actions">
+      <a class="button" href="phases/00-setup-and-tooling/01-dev-environment.html">Start with Lesson 1 →</a>
+      <a class="button ghost" href="catalog.html">See the whole map</a>
+    </p>
+
+    <ul class="stats">
+      <li><strong>${totals.lessons}</strong><span>lessons</span></li>
+      <li><strong>${totals.phases}</strong><span>phases</span></li>
+      <li><strong>${totals.modules}</strong><span>practice modules</span></li>
+      <li><strong>${totals.questions}</strong><span>quiz questions</span></li>
+    </ul>
 
     <div class="ascii-rule"></div>
 
-    <p>Every abstraction in Claude Code resolves to something you can reason about, break, and rebuild. This course teaches the mechanism — not the prompt.</p>
+    <p class="lede">Every abstraction in Claude Code resolves to something you can reason about, break, and rebuild. This course teaches the mechanism — not the prompt.</p>
+  </section>
 
+  <section>
     <h2>Why this course exists</h2>
     <p>Most agentic tooling is taught in two broken ways: as a list of features, or as prompts to copy. Neither teaches the <em>mechanism</em>. The same fear — losing work to an agent run — drives both failures. The fix is to know what the agent is doing. This course is that.</p>
+  </section>
 
-    <h2>Start here</h2>
-    <table>
-      <thead><tr><th>You want to…</th><th>Read</th></tr></thead>
-      <tbody>
-        <tr><td>See the whole map</td><td><a href="catalog.html">Catalog</a></td></tr>
-        <tr><td>Give an agent the full context</td><td><code>llms.txt</code></td></tr>
-        <tr><td>Start learning now</td><td><a href="phases/00-setup-and-tooling/01-dev-environment.html">Lesson 00.1 — Dev Environment</a></td></tr>
-        <tr><td>Look a term up</td><td><a href="glossary.html">Glossary</a></td></tr>
-        <tr><td>Understand the repo</td><td><a href="developer.html">Developer / API</a></td></tr>
-      </tbody>
-    </table>
+  <section>
+    <h2>The 19 phases</h2>
+    <div class="phase-grid">
+${cards}
+    </div>
+  </section>
 
+  <section>
     <h2>Teaching it to yourself, with an agent</h2>
-    <p>This repo is designed to be pointed at an AI agent. The <a href="developer.html">MCP server and REST API</a> are the agent entry points. Four skills, each invoked deliberately by the learner:</p>
-    <table>
+    <p>This repo is designed to be pointed at an AI agent. The <a href="developer.html">MCP server and REST API</a> are the agent entry points. Five skills, each invoked deliberately by the learner:</p>
+    <div class="table-wrap"><table>
       <thead><tr><th>Command</th><th>Does</th></tr></thead>
       <tbody>
         <tr><td><code>/teach-me</code></td><td>Teach one lesson, at the learner's actual level</td></tr>
-        <tr><td><code>/run-module</code></td><td>Start or grade a practice module</td></tr>
+        <tr><td><code>/run-module</code></td><td>Start or grade a practice module against its rubric</td></tr>
         <tr><td><code>/where-am-i</code></td><td>What's demonstrated, what's next</td></tr>
-        <tr><td><code>/write-lesson</code></td><td>Author a new lesson</td></tr>
+        <tr><td><code>/write-lesson</code></td><td>Author a new lesson to template</td></tr>
+        <tr><td><code>/run-workflow</code></td><td>Author the corpus, validate it, rebuild this site</td></tr>
       </tbody>
-    </table>
-    <p>Authoring the corpus itself is also a workflow: <code>node scripts/dynamic-workflow.mjs</code> reports what is missing, authors it in isolated worktrees, validates, and rebuilds this site. See <a href="developer.html">Developer</a>.</p>
-
-    <h2>What you will learn</h2>
-    <ul>
-${rows}
-    </ul>
-
-    <p><a class="button primary" href="phases/00-setup-and-tooling/01-dev-environment.html" style="display:inline-block;text-decoration:none;background:var(--blueprint);color:#fff;padding:0.5em 1em;box-shadow:var(--shadow-hard);">Start with Phase 0 →</a></p>
+    </table></div>
   </section>
 </main>
 ${foot}`;
@@ -284,25 +482,26 @@ function renderCatalog(cur, totals) {
       return `      <li><span class="status-square ${sq}"></span> <a href="${l.outPath}">${l.num}. ${esc(l.title)}</a>${l.gloss ? ` — ${esc(l.gloss)}` : ''}</li>`;
     }).join('\n');
     const mod = p.module
-      ? `<p>Practice module ${esc(p.module.num)} — ${esc(p.module.title)} (<em>${esc(p.module.type)}</em>). <span class="status-square ${p.moduleStatus === 'authored' ? 'complete' : 'planned'}"></span></p>`
+      ? `<p class="mod"><span class="status-square ${p.moduleStatus === 'authored' ? 'complete' : 'planned'}"></span> Practice module ${esc(p.module.num)} — ${esc(p.module.title)} <em>(${esc(p.module.type)})</em></p>`
       : '';
-    return `    <h2>Phase ${p.num} — ${esc(p.name)} <span class="status-square ${p.status}"></span></h2>
-    <p>${esc(p.thesis)} <em>${p.authored}/${p.total} lessons authored.</em></p>
-    <ol>
+    return `    <section class="cat-phase">
+    <h2><span class="status-square ${p.status}"></span> Phase ${p.num} — ${esc(p.name)}</h2>
+    <p>${esc(p.thesis)}</p>
+    <ol class="cat-lessons">
 ${items}
     </ol>
-${mod}`;
+${mod}
+    </section>`;
   }).join('\n\n');
 
-  return `${head('Catalog', 0)}
-<main class="container">
+  return `${head('Catalog', 0, `All ${totals.lessons} lessons across ${totals.phases} phases`)}
+<main id="main" class="container">
   <article class="lesson-article">
     <p class="lesson-meta-tag">CATALOG / ALL LESSONS</p>
     <h1>${totals.lessons} lessons across ${totals.phases} phases</h1>
     <p class="lesson-motto">Each lesson is a single claim you can act on. The phase structure is the dependency graph; the path is the URL.</p>
-
-    <p>${totals.authored} of ${totals.lessons} lessons are authored. ${totals.modulesAuthored} of ${totals.modules} practice modules are written.
-    For the agent-readable form, see <a href="llms.txt">/llms.txt</a>. For the API, see <a href="developer.html">/developer.html</a>.</p>
+    <p>${totals.authored} of ${totals.lessons} lessons are authored, and ${totals.modulesAuthored} of ${totals.modules} practice modules are written.
+    For the agent-readable form see <a href="llms.txt">llms.txt</a>; for the API see <a href="developer.html">developer.html</a>.</p>
 
 ${body}
   </article>
@@ -310,28 +509,41 @@ ${body}
 ${foot}`;
 }
 
+function keyTermsOf(l) {
+  if (l.status !== 'authored') return [];
+  const md = readFileSync(join(l.dir, 'docs', 'en.md'), 'utf8');
+  const section = /^## Key Terms\b([\s\S]*?)(?=^## |\Z)/m.exec(md)?.[1] ?? '';
+  return section.split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^\|/.test(line) && !/^\|\s*-+/.test(line) && !/\|\s*(Term|What people say|What it actually means)\s*\|/i.test(line))
+    .map((line) => line.split('|').slice(1, -1).map((c) => c.trim()))
+    .filter((cells) => cells.length >= 3 && cells[0]);
+}
+
 function renderGlossary(cur) {
   const groups = cur.map((p) => {
-    const rows = p.lessons.flatMap((l) => keyTermsOf(l).map((cells) => ({ lesson: l, cells })));
+    const rows = p.lessons.flatMap((l) => keyTermsOf(l).map((cells) => ({ l, cells })));
     if (!rows.length) return '';
-    const trs = rows.map(({ lesson, cells }) =>
-      `      <tr><td>${esc(cells[0])}</td><td>${esc(cells[1])}</td><td>${esc(cells[2])}</td><td><a href="${lesson.outPath}">${lesson.num}</a></td></tr>`).join('\n');
-    return `    <h2>Phase ${p.num} — ${esc(p.name)}</h2>
-    <table>
-      <thead><tr><th>Term</th><th>What people say</th><th>What it actually means</th><th>Lesson</th></tr></thead>
-      <tbody>
+    const trs = rows.map(({ l, cells }) =>
+      `        <tr><td><strong>${inline(cells[0])}</strong></td><td>${inline(cells[1])}</td><td>${inline(cells[2])}</td><td><a href="${l.outPath}">${l.num}</a></td></tr>`).join('\n');
+    return `    <section class="cat-phase">
+      <h2>Phase ${p.num} — ${esc(p.name)}</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Term</th><th>What people say</th><th>What it actually means</th><th>Lesson</th></tr></thead>
+        <tbody>
 ${trs}
-      </tbody>
-    </table>`;
+        </tbody>
+      </table></div>
+    </section>`;
   }).filter(Boolean).join('\n\n');
 
   const count = cur.flatMap((p) => p.lessons).reduce((n, l) => n + keyTermsOf(l).length, 0);
-  return `${head('Glossary', 0)}
-<main class="container">
+  return `${head('Glossary', 0, `${count} key terms and the misconception each one corrects`)}
+<main id="main" class="container">
   <article class="lesson-article">
     <p class="lesson-meta-tag">GLOSSARY</p>
     <h1>Every key term, and the misconception it corrects</h1>
-    <p class="lesson-motto">${count} terms, aggregated from the Key Terms table of every authored lesson. The middle column is the point: it names the wrong intuition in the same breath as the definition.</p>
+    <p class="lesson-motto">${count} terms, aggregated from the Key Terms table of every lesson. The middle column is the point: it names the wrong intuition in the same breath as the definition.</p>
 ${groups || '    <p>No authored lessons yet.</p>'}
   </article>
 </main>
@@ -409,28 +621,28 @@ function writeOut(rel, content) {
 }
 
 const curriculum = loadCurriculum();
+const allLessons = curriculum.flatMap((p) => p.lessons);
 const totals = {
   phases: curriculum.length,
-  lessons: curriculum.reduce((n, p) => n + p.lessons.length, 0),
-  authored: curriculum.reduce((n, p) => n + p.authored, 0),
+  lessons: allLessons.length,
+  authored: allLessons.filter((l) => l.status === 'authored').length,
   modules: curriculum.filter((p) => p.module).length,
   modulesAuthored: curriculum.filter((p) => p.moduleStatus === 'authored').length,
+  questions: allLessons.reduce((n, l) => n + (l.status === 'authored' ? readQuiz(l.dir).length : 0), 0),
 };
 
-console.log(`Building ${totals.lessons} lesson pages (${totals.authored} authored)…`);
+console.log(`Building ${totals.lessons} lesson pages (${totals.authored} authored, ${totals.questions} quiz questions)…`);
 
 for (const p of curriculum) {
   for (const l of p.lessons) {
     if (l.status !== 'authored') continue;
-    if (writeOut(l.outPath, lessonPage(l))) changed++;
+    if (writeOut(l.outPath, renderLesson(curriculum, l, allLessons))) changed++;
   }
 }
 
 // A page for a lesson that is back to being a scaffold would publish the
-// placeholder as if it were the lesson. Delete anything that is no longer
-// expected rather than leaving it lying around.
-const expected = new Set(curriculum.flatMap((p) =>
-  p.lessons.filter((l) => l.status === 'authored').map((l) => l.outPath.replace(/\\/g, '/'))));
+// placeholder as if it were the lesson. Delete anything no longer expected.
+const expected = new Set(allLessons.filter((l) => l.status === 'authored').map((l) => l.outPath));
 const phasesRoot = join(SITE, 'phases');
 if (existsSync(phasesRoot)) {
   const walk = (dir) => {
@@ -447,6 +659,7 @@ if (existsSync(phasesRoot)) {
   };
   walk(phasesRoot);
 }
+
 for (const [rel, html] of [
   ['index.html', renderIndex(curriculum, totals)],
   ['catalog.html', renderCatalog(curriculum, totals)],
