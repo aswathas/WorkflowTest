@@ -164,14 +164,35 @@ function runClaude() {
   );
 }
 
+// `spawn` with shell:false cannot run npm's Windows shims — `opencode` on PATH
+// resolves to opencode.ps1, CreateProcess finds no .exe, and the worker dies
+// ENOENT having printed nothing. Point at the real binary instead.
+function opencodeBin() {
+  if (process.env.OPENCODE_BIN) return process.env.OPENCODE_BIN;
+  if (process.platform === 'win32' && process.env.APPDATA) {
+    const exe = `${process.env.APPDATA}\\npm\\node_modules\\@opencode\\cli\\bin\\opencode.exe`;
+    if (existsSync(exe)) return exe;
+  }
+  return 'opencode';
+}
+
+// `opencode` must be given piped stdio, not inherited. With `stdio: 'inherit'`
+// it dies before printing anything and returns status null — the process is
+// killed, not failed, so there is no exit code and no error to read. Claude
+// tolerates inherit; opencode does not. Pipe both streams and echo them here.
 function runOpencode() {
   // `opencode run` takes the prompt as one argv element; no shell, so the
   // prompt's quotes and backticks survive intact.
-  return spawnSync(
-    'opencode',
+  const res = spawnSync(
+    opencodeBin(),
     ['run', '--model', process.env.AUTHOR_MODEL || 'opencode-go/deepseek-v4.1-flash', PROMPT],
-    { cwd: ROOT, stdio: ['ignore', 'inherit', 'inherit'], shell: false, maxBuffer: 16 * 1024 * 1024 },
+    { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], shell: false, maxBuffer: 64 * 1024 * 1024, encoding: 'utf8' },
   );
+  if (res.stdout) process.stdout.write(res.stdout);
+  if (res.stderr) process.stderr.write(res.stderr);
+  if (res.error) console.error(`opencode spawn error: ${res.error.message}`);
+  if (res.status === null) console.error(`opencode was killed (signal ${res.signal ?? 'unknown'})`);
+  return res;
 }
 
 const res = WORKER === 'opencode' ? runOpencode() : runClaude();
