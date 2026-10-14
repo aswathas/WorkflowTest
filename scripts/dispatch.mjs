@@ -1,10 +1,12 @@
 // scripts/dispatch.mjs
-// Fallback chain: agy (Gemini) → opencode/deepseek-v4.1-flash → Claude in-process.
-// Used by workflow scripts in place of the `agent:` field, which routes to a
-// Claude/MiniMax subagent and bypasses the real external CLIs.
+// Fallback chain: direct Gemini API → agy CLI (Gemini via Antigravity) →
+// opencode / deepseek-v4.1-flash. Used by workflow scripts in place of the
+// `agent:` field, which routes to a Claude/MiniMax subagent and bypasses the
+// real external CLIs.
 
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { dispatchGemini } from './dispatch-gemini.mjs';
 
 const exec = promisify(execFile);
 
@@ -30,15 +32,11 @@ export async function runAgy(prompt, { timeoutMs = 120_000 } = {}) {
 }
 
 export async function runDeepseek(prompt, { timeoutMs = 180_000 } = {}) {
-  // opencode run echoes the prompt first, then prints result. Use --format json or
-  // default. The default is human-readable; the answer is everything after the
-  // "build · model-name" header line.
   const { stdout } = await exec(
     'opencode',
     ['run', '--model', 'opencode-go/deepseek-v4.1-flash', prompt],
     { timeout: timeoutMs, maxBuffer: 8 * 1024 * 1024 }
   );
-  // Strip the leading "build · model" header line and any ANSI escapes
   const cleaned = stdout
     .replace(/\x1b\[[0-9;]*m/g, '')
     .split('\n')
@@ -50,13 +48,21 @@ export async function runDeepseek(prompt, { timeoutMs = 180_000 } = {}) {
 }
 
 export async function dispatch(prompt, opts = {}) {
+  // 1. Direct Gemini API (fastest, no CLI in path, your key in env)
+  try {
+    return await dispatchGemini(prompt, opts);
+  } catch (e) {
+    if (!e.message || !e.message.includes('No Gemini API key')) {
+      console.warn('[dispatch] gemini direct failed:', e.message.split('\n')[0]);
+    }
+  }
+  // 2. agy CLI (Gemini via Antigravity)
   try {
     return await runAgy(prompt, opts);
   } catch (e) {
-    if (isBudgetError(e.message)) {
-      console.warn('[dispatch] agy budget error, falling back to deepseek');
-      return await runDeepseek(prompt, opts);
-    }
-    throw e;
+    if (!isBudgetError(e.message)) throw e;
+    console.warn('[dispatch] agy budget error, falling back to deepseek');
   }
+  // 3. opencode / DeepSeek
+  return runDeepseek(prompt, opts);
 }
