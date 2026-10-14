@@ -64,7 +64,7 @@ GET /api/v1/markdown?path=/catalog</code></pre>
 
     <h2>Content negotiation</h2>
     <p>Every page on this site has a markdown twin. Add <code>Accept: text/markdown</code> and the server returns markdown. Example:</p>
-    <pre><code>curl -H "Accept: text/markdown" https://harnessing.example/about
+    <pre><code>curl -H "Accept: text/markdown" http://127.0.0.1:4180/about
 # returns the about page as markdown</code></pre>
 
     <h2>Limits</h2>
