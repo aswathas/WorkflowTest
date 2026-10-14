@@ -52,11 +52,18 @@
     },
     {
       "id": "q4",
-      "type": "true-false",
-      "prompt": "The docs use both 'workspace trust' and 'project trust' for the same mechanism.",
-      "answer": true,
-      "explanation": "True. Same mechanism, two names in different pages — a rename still settling. If a lesson teaches one name, expect to see the other in the wild.",
-      "concept": "workspace-trust"
+      "type": "multiple-choice",
+      "prompt": "Two settings files set the same key. What happens?",
+      "options": [
+        "The lower file wins",
+        "The higher-precedence one wins",
+        "Claude Code merges both into a new file",
+        "Claude Code prompts you to pick"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The highest-precedence layer that sets the key wins. The subtlety is arrays merge across layers while single values are replaced — see Step 3.",
+      "concept": "settings-precedence"
     },
     {
       "id": "q5",

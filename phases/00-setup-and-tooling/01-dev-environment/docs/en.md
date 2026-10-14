@@ -12,71 +12,67 @@
 
 By the end of this lesson you will be able to:
 
-- Explain why environment setup is a *thinking* concern and not a chore
-- Start a terminal in any directory and get your bearings in under five seconds
-- Verify that the tools this whole course depends on are present and correct
-- Set up `CLAUDE.md`, which makes every later lesson work better
+- Say where an agent can and cannot act, and why that comes from one choice
+- Get your bearings in an unfamiliar directory in under a minute
+- Verify your tools are actually installed, not merely present on `PATH`
+- Trace any setting back to the file that supplied it
 
 ---
 
 ## The Problem
 
-An agent does not read your mind. It reads the directory you launched it in, the
-files in that directory, and the instructions in `CLAUDE.md`. If those three
-things are unclear, the agent is not being difficult — it is guessing, and you
-are the only one who can tell it's guessing.
+You install Claude Code once. Then you spend an afternoon debugging it and never
+suspect the install.
 
-Here is what that costs, from building this course. Three failures that all looked
-like the tool being broken, and all were environment problems:
+Wrong directory. Wrong shell. A tool that exists but isn't real. Every later
+lesson assumes setup worked — so when it didn't, the failure surfaces thirty
+minutes into a lesson about something else, and you blame the wrong thing.
 
-**The session that refused to start.** A worktree tool reported *"not in a git
-repository"* while `git rev-parse` in the same directory returned `true`. The
-harness had probed the working directory at launch, found nothing, cached the
-answer, and never checked again. The fix was to restart. **Twenty minutes
-gone, and no amount of re-reading the docs would have found it** — the
-documentation and the tool were both correct; the timing was wrong.
+Here are three real ones, from building this course. Each looked like a tool bug.
+Each was fixed in under a minute once you knew where to look.
 
-**The failing build that wasn't.** After a clean merge of three agents' work,
-the test suite went red. It read like total failure. It was a wrong glob in
-`package.json`. **Nine pass, zero fail after a one-character fix.** If you trust
-a red suite without checking the runner first, you throw away good work.
+**The session that refused to start.** A feature that gives agents their own
+copies of a repository reported *"not in a git repository"* while `git rev-parse`
+in the same directory returned `true`. The
+harness had checked the directory at launch, found nothing, cached the answer,
+and never checked again. **Twenty minutes gone** — and no amount of re-reading
+the docs would have found it. The documentation was correct. The tool was
+correct. The timing was wrong.
+
+**The failing build that wasn't.** After a clean merge of three agents' work, the
+test suite went red. It read like total failure. It was a wrong glob in
+`package.json`. **Nine pass, zero fail after a one-character fix.** Trusting a red
+suite without checking the runner first means throwing away good work.
 
 **The setting that did nothing.** You edit a config file, restart, and the
-behaviour is unchanged. You edit it again, harder. The problem is that four
-other files also set that key and one of them wins. **`/status` tells you which
-one in a single line.** It is the most under-used command in the tool.
+behaviour is unchanged. You edit it harder. The problem is that four other places
+also set that key, and one of them wins.
 
-Notice what these have in common: **each one presented as a bug in the tool, and
-each was fixed in under a minute once you knew where to look.** The environment
-is where that knowledge lives. Set it up badly and every later lesson costs you
-an hour of debugging your own setup.
+Every one of these presented as a bug in the tool. Every one lives in your
+environment. **Forty minutes of setup now, or an hour of confusion per lesson for
+the rest of the course.**
 
----
-
-> **Sharpen this with your own scars.** The three above are real, but they're
-> mine. If you've lost an afternoon to a config problem, a wrong-directory
-> incident, or a tool that silently didn't work, that story is sharper than
-> anything here — write it into this section. A lesson's Problem section is
-> worth most when the pain is recognisable to *you*.
+> **Sharpen this with your own scars.** These three are real, but they're mine. If
+> you've lost an afternoon to a config problem or a wrong-directory incident,
+> that story lands harder than anything here. Write it into this section.
 
 ---
 
 ## The Concept
 
-An agent works through your shell. Every file it reads, every command it runs,
-every test it executes goes through the terminal you gave it. You are not
-configuring a workspace — you are configuring **the hands you think with**.
+An agent has one way to touch the world: a **shell**. A shell is the program that
+reads your typed commands and runs them. Files, network, git — everything routes
+through it.
 
 ```mermaid
 flowchart LR
-    You[You] -->|prompts| CC[Claude Code]
-    CC -->|tool calls| SH[Shell]
-    SH -->|runs| FS[(Your filesystem)]
-    SH -->|runs| NET[Your network]
-    SH -->|runs| GIT[Your git]
-    FS -->|results| SH
-    SH -->|results| CC
-    CC -->|text| You
+    You[You] -->|prompt| CC[Claude Code]
+    CC -->|tool call| SH[Shell]
+    SH --> FS[(Files)]
+    SH --> NET[Network]
+    SH --> GIT[Git]
+    FS & NET & GIT -->|result| SH
+    SH -->|result| CC
 
     style You fill:#3553ff,stroke:#3553ff,color:#fff
     style FS fill:#f3f1e8,stroke:#1a1a1a
@@ -86,130 +82,122 @@ flowchart LR
     style CC fill:#efece0,stroke:#1a1a1a
 ```
 
-Two properties of this diagram do most of the work in this course:
+**The reframe: you are not setting up a machine, you are choosing which directory
+an agent is allowed to act inside.** Every downstream boundary — what it may
+touch, what it may change, what it may reach — inherits that one choice.
 
-**Everything routes through the shell.** There is no side channel. Whatever your
-shell can do, the agent can do — including the things you did not want it to do.
-
-**You are in the loop, twice.** Once when you choose the working directory (that
-choice sets every boundary), and once in `CLAUDE.md` (that file is read into
-context before your first prompt is answered).
-
-That second loop is the one people miss. Most people configure their terminal
-carefully and then wonder why the agent keeps doing the same thing wrong. It was
-never the terminal.
-
-```mermaid
-flowchart TD
-    Start[Launch Claude Code<br/>in a directory] --> Trust{Directory trusted?}
-    Trust -->|No| Prompt[Prompt before loading<br/>project MCP servers]
-    Trust -->|Yes| Md[Read CLAUDE.md]
-    Md --> Cli[Read settings.json layers]
-    Cli --> Hooks[Run SessionStart hooks]
-    Hooks --> Ready[Session live]
-
-    style Prompt fill:#fdf0e8,stroke:#9a3412
-    style Md fill:#e8f2ed,stroke:#2d6a4f
-    style Ready fill:#e8f2ed,stroke:#2d6a4f
-```
-
-**The reframe:** you are not setting up a machine, you are choosing which
-directory an agent is allowed to act inside. Everything downstream — permissions,
-isolation, safety — inherits that choice.
+This is why the wrong directory is so expensive. An agent launched in your home
+directory and one launched in a single project are the same program with
+different blast radius.
 
 ---
 
 ## Build It
 
-### Step 1: Open a terminal in this repo
+### Step 1: Get your bearings
 
 ```bash
 cd /path/to/this/repo
-pwd          # prints the absolute path — you are here
-ls -a       # including dotfiles: .claude, .git, .gitignore
-git status   # tells you whether the tree is clean
+pwd            # absolute path — you are here
+ls -a         # all files including dotfiles: .claude, .git, .gitignore
+git status    # is anything uncommitted?
 ```
 
-**Read those three outputs together.** `pwd` says where. `ls -a` says what's here.
-`git status` says whether it's safe to change anything. Before an agent touches a
-directory, you should be able to answer all three without scrolling.
+Read all three. Before an agent touches a directory, you should be able to answer
+*where am I*, *what's here*, and *is it safe to change anything* — without
+scrolling.
 
-### Step 2: Verify the four tools this course needs
+### Step 2: Verify the tools
 
 ```bash
-git --version
-node --version      # or python3 --version, if you prefer
-claude --version
+bash code/setup-check.sh
 ```
 
-Any of these missing is fine — the course adapts. But know which, because a
-lesson that assumes `node` and silently assumes it is a bad lesson.
+Prints what's present, what's missing, and whether your config files exist.
+Exits `0` when ready, `1` when not.
+
+**If it reports `Missing: claude`, install it now.** Every step after this one
+assumes it exists. Docs: <https://code.claude.com/docs/en/quickstart>
+
+It also catches a trap worth knowing. On Windows, `python3 --version` can print
+*"Python was not found"* and **still exit 0** if you have the Microsoft Store
+shim. A tool that is on your `PATH` but not installed is worse than one that's
+absent — you don't know to fix it. **Presence is not correctness.**
 
 ### Step 3: Find your config, and know which one wins
 
-Claude Code reads four settings files. Knowing the order saves real debugging:
+Claude Code reads configuration from **five layers** — four files and one command-line
+flag. Highest wins.
 
-| Precedence | File | Who it affects |
+| # | Where | Who it affects |
 |---|---|---|
-| 1 (highest) | `managed-settings.json` | Your organization |
-| 2 | `claude --settings` | You, this session |
+| 1 | Managed settings (your organisation) | Everyone |
+| 2 | `--settings` flag | You, this session |
 | 3 | `.claude/settings.local.json` | You, this project only |
 | 4 | `.claude/settings.json` | Everyone in the project |
 | 5 | `~/.claude/settings.json` | You, every project |
 
-Inside a session, `/status` prints a **Setting sources** line telling you exactly
-which file supplied each value. Use it before you guess.
-
 ```bash
-ls -a .claude/                 # project-level
+ls -a .claude/
 cat .claude/settings.json      # committed, shared
-ls ~/.claude/settings.json     # user-level
+cat ~/.claude/settings.json    # yours, everywhere
 ```
+
+**Two rules when the same key appears twice:** arrays (lists) merge across
+layers; scalars (single values) are replaced by the higher one.
 
 ### Step 4: Write your CLAUDE.md
 
-This is the highest-leverage file in the repo, and it is read before your first
-prompt is answered.
+`CLAUDE.md` is a plain markdown file at your project root. Claude Code reads it
+at startup, before your first prompt is answered. It is where you say things
+that would otherwise be rediscovered every session.
 
-```bash
-$EDITOR CLAUDE.md
-```
-
-A starting shape — four sections, keep it under 200 lines:
+Write it in whatever editor you have:
 
 ```markdown
-# Project Name
+# my-cli
 
-One paragraph: what this is and what it's for.
+Wraps the internal build tool. Not a general-purpose CLI.
 
 ## Commands
 
-- Install: `<command>`
-- Test: `<command>`
-- Run: `<command>`
+- Install: `npm install`
+- Test: `npm test`
 
 ## Conventions
 
-- <the rules a contributor would get wrong by guessing>
-
-## Agent notes
-
-- <anything an agent would otherwise waste turns discovering>
+- `src/parser.ts` is generated. Never hand-edit it.
 ```
 
-**The rule that matters: under 200 lines.** When it grows past that, the content
-is reference material, not instructions — move it to a skill and leave a pointer.
+Note what's *not* there: no preamble, no philosophy, no aspirational guidance.
+Three sections and specific commands beat thirty lines of prose.
+
+**Keep it short.** Every session pays to read it. Once it's more than a couple of
+screens, the agent starts skipping it and you end up verifying its claims anyway.
+If it's genuinely large, the answer is a separate reference file it can open on
+demand — a lesson for later.
 
 ### Step 5: Prove it works
 
-Ask the agent something that can only be answered from `CLAUDE.md`:
+Inside Claude Code, type a command starting with `/`. These are **slash
+commands** — actions the tool provides, typed at the prompt.
+
+```
+/status
+```
+
+It prints a line telling you which file supplied each setting. **Check this
+before editing any config file.** Usually the setting you're editing isn't the
+layer that won.
+
+Then ask:
 
 ```
 What are the commands in this project, and where did you get them?
 ```
 
-If it answers from the file, setup works. If it answers from a generic guess,
-your `CLAUDE.md` is missing, unread, or too vague.
+If it answers from `CLAUDE.md`, setup works. If it guesses generically, your file
+is missing, too vague, or too long.
 
 ---
 
@@ -217,39 +205,30 @@ your `CLAUDE.md` is missing, unread, or too vague.
 
 | Command / file | When you reach for it |
 |---|---|
-| `pwd` | First thing, every new session — you must know where you are |
+| `pwd` | First thing, every session — you must know where you are |
 | `git status` | Before and after anything an agent does |
-| `ls -a` | Reading a directory that has config in it |
-| `/status` | "Why is this setting not working?" — shows Setting sources |
-| `claude doctor` | Rejected settings entries, broken config |
+| `bash code/setup-check.sh` | First thing in a new repo |
+| `/status` | "Why isn't this setting working?" |
 | `CLAUDE.md` | Once per project. Then maintain it |
-| `.claude/settings.json` | Shared project config — commit it |
-| `.claude/settings.local.json` | Your own project overrides — don't commit |
-
-**When you're stuck on a config question:** check `/status` before editing
-anything. Nine times in ten, the answer is which layer won, and editing the layer
-you *think* is responsible is how settings appear to be ignored.
+| `.claude/settings.json` | Shared project config — commit this |
+| `.claude/settings.local.json` | Your own overrides — don't commit |
 
 ---
 
 ## Exercises
 
-1. Open a terminal, `cd` to this repo, and produce the three outputs from Step 1
-   without looking them up.
-   ✅ You pass when you can name the absolute path, list the dotfiles, and state
-   whether the tree is clean — in under 30 seconds.
+1. Run `bash code/setup-check.sh` and read every line of output.
+   ✅ You pass when it prints `Result: ready.` and `echo $?` prints `0`.
 
-2. Run `/status` and identify which file supplied your `model` setting.
-   ✅ You pass when you can point at the actual file path it names, not guess
-   the precedence order from memory.
+2. Run `/status` and find which file supplied a setting you care about.
+   ✅ You pass when you can name the actual file path, not recite the precedence
+   order from memory.
+   *If nothing is set, add a `model` key to `.claude/settings.local.json`,
+   restart, and run it again.*
 
-3. Write a `CLAUDE.md` for a project of yours with all four sections, then delete
-   the least useful section.
-   ✅ You pass when you can say what you removed and why it didn't earn its place.
-   (This one is about subtraction, not writing.)
-
-4. Get an agent to answer a question using *only* your `CLAUDE.md`.
-   ✅ You pass when the agent cites your file rather than generalizing.
+3. Write a `CLAUDE.md` for a real project of yours — filled in, not a skeleton.
+   ✅ You pass when every command in it is one you would actually type, and no
+   line is there only because a template had a heading for it.
 
 ---
 
@@ -257,28 +236,27 @@ you *think* is responsible is how settings appear to be ignored.
 
 | Term | What people say | What it actually means |
 |---|---|---|
+| **Shell** | "The terminal" | The program that runs your commands. The agent's only path to your files, network, and git |
 | **Working directory** | "The project folder" | The one directory an agent is scoped to. Every boundary starts here |
-| **Settings precedence** | "Config" | Five layers. The highest layer that sets a key wins; arrays merge, scalars override |
-| **Workspace trust** | "Permission" | Whether you've agreed to let this directory's MCP servers run |
-| **Project trust** | "Permission" | *Same mechanism.* The docs use both words — a rename in progress |
-| **CLAUDE.md** | "Config" | Instructions read into context before your first prompt is answered |
-| **Shell** | "The terminal" | The only path between the agent and your filesystem, network, and git |
+| **Settings precedence** | "Config" | Five layers. Highest wins; arrays merge, scalars are replaced |
+| **Slash command** | "A command" | An action typed at the prompt beginning with `/` |
+| **CLAUDE.md** | "Config" | Markdown read at startup, before your first prompt |
+| **Managed settings** | "Admin config" | Settings your organisation enforces; you cannot override them |
 
 ---
 
 ## What this lesson skipped
 
-- **Editor configuration.** Matters, doesn't affect the agent's behaviour.
-- **Shell customisation.** Aliases and prompts are yours. This course will never
-  assume one.
-- **Containerised dev.** Right answer for some teams, wrong default for learning.
+Editor and shell configuration are yours — this course never assumes one. Windows
+users: Git Bash or WSL both work; the commands here are the same either way.
 
-Come back for containers in Phase 17 (Scaling & Operations), if at all.
+Installing Claude Code itself is in the quickstart, linked in Step 2. Containers
+are for much later, if ever.
 
 ---
 
 ## Related
 
 - Next: **Git & Collaboration** — the safety net everything after depends on
-- Later: Phase 04 **Settings** — the full precedence rules and every key
-- Later: Phase 08 **Hooks** — automating the checks you just learned to run by hand
+- Later: Phase 04 — the full settings reference and every key
+- Later: Phase 08 — automating the checks you just learned to run by hand
