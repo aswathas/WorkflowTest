@@ -1,61 +1,246 @@
 # Prompt, Inference, API
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can say precisely which part of the system your words actually reach — and
+> stop blaming your wording for things the loop decided.
 
 **Type:** Learn
-**Prerequisites:** Lesson 8, The Context Window — the only budget that matters
+**Prerequisites:** Lesson 8, The Context Window
 **Time:** ~30 minutes
 
 ---
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Draw the boundary between the prompt you write and everything the harness adds
+- Describe one API request end to end: request in, tokens out, billed
+- Explain what temperature changes in one sentence, from evidence
+- Point at the part of a failure that is a model problem rather than a plumbing one
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+An agent produced the wrong thing. The natural response was to reword the
+request — so the prompt got longer, more emphatic, and more specific about how
+the output should look. It got worse.
+
+Because most of what the model saw was never in the prompt. The harness supplied
+system instructions, tool definitions, project instructions, and a hundred
+messages of history. The prompt was a paragraph in a document that had already
+been decided. Editing it changed one paragraph.
+
+The same confusion shows up on the other side: people talk about "the model" as
+though it were one thing being consulted, when what actually happens is a
+request leaving your machine, a response arriving, and both being billed. When
+something breaks in the middle of that, you need to know which end broke.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+Three words that get used loosely. Keep them separate.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+**Prompt** is not what you typed. The prompt is *the entire input*: your text
+plus the harness's instructions, tool definitions, project files, and the whole
+conversation. When you send a message, the model sees a document you did not
+write and cannot fully see.
+
+**Inference** is one forward run: input in, output out. Not training. Training
+is how the weights got made, months ago, offline. Inference is the thing that
+happens when you press enter, and it is the only thing you are paying for.
+
+**API** is the interface between them — a request you send and a response you
+receive, over a network, with numbers attached.
+
+```mermaid
+sequenceDiagram
+    participant You
+    participant Code as Claude Code
+    participant API
+    You->>Code: "fix the failing test"
+    Code->>Code: Assemble prompt (your words + system + tools + history)
+    Code->>API: request: prompt, model, parameters
+    API->>API: Inference — predict next token, repeat
+    API-->>Code: response text + token counts
+    Code->>Code: Append to conversation; may call a tool
+    Code->>API: next request (whole prompt again)
+    API-->>Code: response
+    Code-->>You: answer + what it cost
+```
+
+Look at the loop. One user turn can be many requests. Each one re-sends the
+prompt and each one is billed. "How much did that one question cost" has an
+answer that is not the length of your question.
+
+### What a request actually carries
+
+| Field | What it is | Who sets it |
+|---|---|---|
+| The message | Your turn | You |
+| System instructions | Behaviour, format, tool-use rules | The harness |
+| Tool definitions | Names, descriptions, parameter schemas | The harness |
+| Project context | `CLAUDE.md`, memory, environment | The harness |
+| History | Every prior turn | The harness, from both of you |
+| Model | Which model answers | You, via `/model` |
+| Temperature | How flat or peaked sampling is | You, occasionally |
+
+You control one row that the harness does not rewrite. That is worth knowing
+both because it is humbling and because it tells you where effort pays off.
+
+### Temperature, concretely
+
+Temperature scales the scores before sampling. Low temperature: the top
+candidate dominates, output is consistent and repetitive. High temperature: the
+distribution flattens, output varies and can wander.
+
+```bash
+claude -p "Name three colours. Just the names."
+```
+
+```bash
+claude -p "Name three colours. Just the names."
+```
+
+Different answers. That is temperature doing its job, not instability. Lower it
+when you need repeatable output — extraction, formatting, a fixed list. Leave it
+alone when you want options.
+
+### Which failure is which
+
+| Symptom | Likely cause |
+|---|---|
+| Ignores an instruction you wrote clearly | It may have been out-competed by the system prompt or a project file. Check whether a file contradicts you. |
+| Different answer to the same question | Sampling. Re-run; don't rewrite. |
+| Refuses a harmless request | Permissions or tool definitions, not the model. |
+| Wrong about your code | No tool read the file. Lesson 6's failure mode. |
+| Truncated mid-answer | Ran out of window or output room. Lesson 8. |
+| Slow, then fine | Rate limiting or a cold cache. Lesson 11. |
+
+Naming the layer turns "it's being weird" into something you can act on.
+
+> **The reframe:** the prompt is the whole assembled document, not your
+> paragraph — so when output is wrong, ask which layer decided before rewriting
+> the one part you actually wrote.
+
+Every field, flag, and model name in this lesson moves. Read
+[the API docs](https://code.claude.com/docs/llms.txt) for current values; the
+mechanism is stable, the numbers are not.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. See the prompt you did not write
 
-1. First step.
-2. Second step.
+Start a fresh session and immediately ask:
+
+```
+What files did you load at startup, and what instructions are you operating
+under? Quote them.
+```
+
+You will get system-level instructions you never typed. That is the harness
+prompt, and it is larger than your message.
+
+✅ You pass when the answer contains at least one instruction you did not write.
+
+### 2. Prove your prompt is a fraction of the input
+
+Same session, ask:
+
+```
+Roughly how many tokens are in my whole input right now, and how many of those
+are my own words?
+```
+
+The ratio is the point. It is usually lopsided enough to be surprising.
+
+✅ You pass when you can state the ratio and name the biggest non-yours
+contributor.
+
+### 3. Watch one turn cost several requests
+
+Ask a question that requires investigating:
+
+```
+Which module in src/ decides how a lesson gets validated? Answer with the path.
+```
+
+Then `/usage`. One turn, and it did not obviously mean one request — it read,
+searched, checked. Each step is a billed request carrying the whole prompt
+again.
+
+✅ You pass when your cost for that turn is consistent with more than one
+request having happened.
+
+### 4. Get determinism where you want it
+
+Extraction is the case where variation costs you:
+
+```
+Extract every heading from COURSE-CONTEXT.md as a JSON array, lowercase, no
+prose. Output only JSON.
+```
+
+Run it twice. If the two runs disagree on anything, the format is not tight
+enough — tighten the format, or drop the temperature if you are at the API
+rather than in a session.
+
+✅ You pass when two runs produce byte-identical output.
+
+### 5. Find the file that contradicts you
+
+Tell the agent to do something this repo's own instructions forbid:
+
+```
+Commit everything with the message 'wip'
+```
+
+The commit-attribution rule in `CLAUDE.md` will be injected into the context.
+Watch the agent follow the file rather than your sentence.
+
+✅ You pass when the agent follows the file, and you can quote the file line that
+won.
+
+### 6. Classify three failures
+
+Write down three times something went wrong in a session. For each, name the
+layer: prompt, sampling, permissions, missing read, window, or rate limit. Use
+the table above.
+
+✅ You pass when all three are classified by mechanism, not by symptom.
 
 ---
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Concept | When you reach for it |
 |---|---|
-| — | — |
+| Prompt = whole assembled input | Before rewriting a prompt that failed |
+| Inference vs training | Explaining a bill, or why nobody can "fix the model" |
+| One turn may be many requests | Reading `/usage` after a single question |
+| Temperature | Repeatable output — extraction, formatting, fixed lists |
+| Naming the failing layer | Any "the agent is being weird" moment |
+| Checking `CLAUDE.md` first | When an instruction you gave is ignored |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Ask the same question three ways — plain, with an explicit format, with an
+   explicit fallback ("say so if you can't find it"). Record all three outputs.
+   ✅ You pass when you can point at the specific difference each constraint made,
+   not just that one was "better".
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Find one place where `CLAUDE.md` and your spoken instruction disagree. Have the
+   agent resolve it and tell you which one it followed and why.
+   ✅ You pass when the agent names the file as the source, and you can check the
+   line yourself.
+
+3. Take one expensive turn from `/usage` and account for it: how many requests do
+   you think it took, and what was each one doing?
+   ✅ You pass when your accounting is within one request of the reported tokens
+   and every request has a named purpose.
 
 ---
 
@@ -63,10 +248,33 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| prompt | "what I typed" | The whole assembled input: your text, system instructions, tool definitions, project files, and all history. |
+| inference | "the model thinking" | One forward run producing output from input. The only thing you pay for. |
+| training | "when it learns" | Fitting the weights, offline, before you ever prompted. Not something you trigger. |
+| API | "the model" | A network interface with a request, a response, and token counts. Something can break at either end. |
+| temperature | "how creative it is" | How much the sampling distribution is flattened. Low is repeatable, high is varied. |
+| max output tokens | "the length cap" | The ceiling on one response. Hitting it truncates mid-answer. |
+| system prompt | "its instructions" | Harness-supplied behaviour rules, injected every request. Not yours, and often larger than yours. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**Writing an actual API call.** The request shape, streaming, and tool-use
+blocks. That is real engineering and this phase does not need it — everything
+here is visible from inside Claude Code. Come back if you build something outside
+it.
+
+**Choosing a model.** Which one to use, and what the trade-offs are. That is
+Phase 03, and it needs this lesson plus Lesson 11 before it makes sense.
+
+**Prompt engineering techniques.** System prompt design, few-shot, chain of
+thought. Genuinely useful, deliberately excluded — the course teaches you to
+direct an agent, not to prompt a raw model, and a prompt-craft rabbit hole here
+would crowd out the loop.
+
+**Prompt caching.** How repeated content gets cheaper on re-send. Visible in
+`/usage`, properly explained alongside model pricing in Phase 03.
+
+**Batch, streaming, and rate-limit headers.** Streaming matters for perceived
+latency; rate-limit headers matter for Lesson 11, which is next.

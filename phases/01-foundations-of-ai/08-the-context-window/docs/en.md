@@ -1,61 +1,262 @@
 # The Context Window — the only budget that matters
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can look at any session and say what is in the window, what is about to be
+> dropped, and what to do about it — before the agent quietly loses something you
+> needed.
 
 **Type:** Learn
 **Prerequisites:** Lesson 7, Tokens — why text becomes currency
-**Time:** ~30 minutes
+**Time:** ~35 minutes
 
 ---
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- List what occupies a session's window before the user types a word
+- Read `/context` and name the biggest category in a real session
+- Choose between letting a session continue, compacting it, and clearing it
+- Move a rule out of conversation history and into a file that always loads
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+An agent was mid-way through a four-file refactor. It stopped, restarted its
+approach twice, and eventually proposed a change that reverted an edit it had
+made an hour earlier — an edit it had made itself, and reported as done.
+
+Nothing crashed. No error appeared. The context window had filled, the
+conversation was summarized, and the summary did not carry the detail that the
+agent had already established: which of the four files it had changed and how.
+The agent behaved correctly given what it could still see. That is what makes
+this failure so quiet.
+
+Everything else in this course hangs off this one fact. Parallel agents work
+because each has its own window. Compaction exists because windows fill. Long
+sessions are expensive because windows re-send. You cannot reason about any of
+that until "what is in the window, and what happens when it's full" is concrete.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+The context window is the entire body of text the model sees on the next turn.
+Not the chat. Everything: your instructions, the agent's instructions, the tool
+list, files it has read, command output, every word of both sides of the
+conversation.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+It is a fixed budget. It fills. It is never enlarged by being clever — and when
+it fills, something is discarded, because there is no other option.
+
+```mermaid
+flowchart TD
+    subgraph Startup["Loaded before you type"]
+        A[System instructions] --> Z[Window]
+        B[CLAUDE.md] --> Z
+        C[Memory files] --> Z
+        D[Tool definitions] --> Z
+    end
+    subgraph Work["Accumulates as you work"]
+        E[File reads] --> Z
+        F[Command output] --> Z
+        G[Both sides of the conversation] --> Z
+    end
+    Z --> H{Full?}
+    H -->|No| I[Next turn]
+    I --> G
+    H -->|Yes| J[Compact: summarize older history]
+    J --> Z
+```
+
+### What fills it, in order of arrival
+
+**Before you type anything:**
+
+| What | Roughly |
+|---|---|
+| System instructions for the harness | A few thousand tokens. Never shown to you. |
+| `CLAUDE.md` and memory files | Whatever you wrote. Free to add — but not free. |
+| Tool definitions | Every tool the agent can call, with its schema. |
+| Environment details | Working directory, platform, shell, git state. |
+
+**As work proceeds:**
+
+- every file read, at full length
+- every command's entire output
+- every message, both directions
+- notes the agent takes to itself about itself
+
+The single most expensive thing that can happen is a single large read. One
+pasted log can outweigh an hour of conversation.
+
+### What happens when it fills
+
+It does not fail. It **compacts**: the harness summarizes older history to make
+room, and the conversation continues from the summary.
+
+What survives depends on *how* the content got there. This is the part that
+matters and almost nobody knows:
+
+| Content | After compaction |
+|---|---|
+| System instructions | Still there |
+| Project-root `CLAUDE.md`, unscoped rules | Re-injected from disk |
+| Memory files | Re-injected from disk |
+| Recently read or edited files | A handful re-read, most recently modified first |
+| Skill bodies you invoked | Re-injected, capped, oldest dropped first |
+| Rules scoped to a path | Summarized away — they load again on demand next time |
+| **The middle of the conversation** | **Gone. Replaced by a summary.** |
+
+The last row is where the refactor died. The first rows are why the agent still
+knows the project's conventions. So:
+
+- **Anything that must survive, write it to a file.** Files get re-injected.
+  Conversation history does not.
+- **Anything you want a summary to preserve, say so.** `/compact focus on the
+  auth bug fix` steers what survives. The automatic pass has to guess.
+
+### The four moves
+
+| Command | What it does | When |
+|---|---|---|
+| `/context` | Draws the window as a grid, by category | Whenever you want to know where the tokens went |
+| `/compact [focus]` | Summarizes history, keeps the conversation | Same task, window filling |
+| `/clear [name]` | New conversation, empty window | Switching to unrelated work |
+| `/resume` | Reopen a cleared conversation | You cleared and now want it back |
+
+`/context` is the one to make a habit. It turns context from a vibe into a
+number you can act on.
+
+> **The reframe:** the window is a fixed budget that fills and then summarizes
+> itself, so anything that must survive compaction belongs in a file that gets
+> re-read — never in the conversation that is about to be summarized away.
+
+Window sizes, compaction thresholds, and command behaviour change as Claude Code
+ships. Check
+[the context window page](https://code.claude.com/docs/en/context-window) and
+`/context` in your own session rather than trusting a figure quoted here.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Look at a window before it matters
 
-1. First step.
-2. Second step.
+Start a session in this repo and run, as your first action:
+
+```
+/context
+```
+
+Before you have typed a real request. Everything on that grid is what the agent
+carries for free — the cost of you being here.
+
+✅ You pass when you can name the three largest categories on the grid and none
+of them are the conversation.
+
+### 2. Watch it fill
+
+Ask for a real investigation:
+
+```
+Find every place this repo documents a lesson format. Report paths only.
+```
+
+Run `/context` again. Compare. The conversation is now a real category.
+
+✅ You pass when you can point at which category grew and by roughly how much.
+
+### 3. Find the expensive single item
+
+Look for the largest category that is *not* the conversation — usually file
+reads or command output. Ask for one deliberately huge read and watch it:
+
+```
+Print the whole of scripts/validate-lessons.mjs with line numbers.
+```
+
+Then `/context`. One request, and a large permanent addition.
+
+✅ You pass when you have a before-and-after number showing what one read cost.
+
+### 4. Steer a compaction
+
+```
+/compact focus on the lesson-format findings, drop the file listings
+```
+
+Now check what the conversation still contains. The focus instruction decided
+what survived. Without it, the automatic pass guesses.
+
+✅ You pass when you can quote something you asked to keep and confirm it is
+still there after the compaction.
+
+### 5. Watch a rule get summarized away
+
+Put a scoped rule in the conversation and compact, versus putting the same
+content in `CLAUDE.md` and compact. The first is at the mercy of the summary.
+The second is re-read from disk.
+
+Keep it simple — the file moves:
+
+```
+/compact
+```
+
+then confirm the project instructions are still present in the session
+afterwards.
+
+✅ You pass when you can say which of the two survived and why, naming the
+mechanism rather than the feeling.
+
+### 6. Clear between unrelated tasks
+
+You have finished one task and are starting a completely different one. The old
+context is not stale to the model — it is still there, still being paid for,
+still crowding out.
+
+```
+/clear phase-one-done
+```
+
+Then `/context`. Compare to the previous grid.
+
+✅ You pass when the new window is visibly emptier and you named the task you
+switched away from.
 
 ---
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Command | When you reach for it |
 |---|---|
-| — | — |
+| `/context` | Any time you want to know where the tokens went |
+| `/compact` | Same task, window filling, history matters |
+| `/compact <focus>` | Before a long stretch — you know what must survive |
+| `/clear <name>` | Switching to unrelated work |
+| `/resume` | After a clear, when you want the old thread back |
+| Put rules in `CLAUDE.md` | Any rule that must survive compaction |
+| Ask for narrow output | Preventing the fill in the first place |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Record `/context` three times in one session: at startup, after a broad
+   investigation, and after `/compact`. Keep all three grids.
+   ✅ You pass when you can say which category grew most and whether compaction
+   shrank the conversation category specifically.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Write one instruction you want to survive an hour of work. Put it in
+   `CLAUDE.md` in a scratch project. Compact. Confirm it survived. Then say what
+   would have happened had you only said it in chat.
+   ✅ You pass when the rule is present after compaction and you can describe the
+   mechanism from memory.
+
+3. Hit `/context` twice in a real session and find the largest thing you did not
+   need in the window. Remove it with a narrower ask next time.
+   ✅ You pass when you have the before-and-after grids and a one-line note on
+   what you would ask instead.
 
 ---
 
@@ -63,10 +264,33 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| context window | "the chat history" | Every token the model sees next turn: instructions, tool definitions, files, command output, and the conversation. One budget for all of it. |
+| context | "what it remembers" | The whole re-sent body. It is re-transmitted, not recalled from a store. |
+| compaction | "it forgot" | Automatic or manual summarization of older history to make room. Loses detail by design. |
+| survives compaction | "it's still in context" | Depends on how it got there. Files and root instructions are re-read; the middle of the conversation is not. |
+| `/clear` | "new chat" | Empty window, new conversation. `/resume` reopens a cleared one. |
+| window size | "how much it can hold" | A per-model, sometimes per-configuration number. Move it and you break this lesson — check `/context` and the docs. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**Prompt caching.** Reading the same content twice can cost far less the second
+time, which changes how you reason about repeated reads. It is real and it shows
+up in `/usage`. It needs a cost frame to make sense, and Phase 03 is where
+models and their trade-offs land.
+
+**Isolated windows.** The reason parallel agents work is that each one has its
+own window. That is Phase 06, and it depends on this lesson rather than the
+other way round.
+
+**Skills and path-scoped rules** as context-management tools. Both appear in the
+compaction table above and both get their own phases, because each needs
+grounding this phase cannot give.
+
+**How to raise the ceiling.** Some models offer a much larger window. Irrelevant
+until Phase 03, where choosing a model is the actual skill — a bigger window
+costs more and is usually the wrong answer.
+
+**Fine-grained compaction control.** Tuning exactly when automatic compaction
+fires. Available in settings; premature. Get the instincts first.

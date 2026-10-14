@@ -1,61 +1,202 @@
 # What a Language Model Is
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You stop reading a fluent, confident answer as a lookup and start reading it as
+> a very good guess — which means you check the parts that could be wrong.
 
 **Type:** Learn
-**Prerequisites:** Lesson 5, Debugging & Profiling
+**Prerequisites:** Phase 00, Lesson 5 (Debugging & Profiling)
 **Time:** ~30 minutes
 
 ---
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Produce the same prompt twice and explain why the two answers differ
+- Predict which parts of a model answer are most likely to be invented
+- Decide when a question is one to ask a model and when it is one to ask a file
+- Say in one sentence why a model cannot tell you it is wrong
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+An agent was asked to fix a failing authentication test. It read the test, read
+the module, and wrote a patch calling `validate_token_v2()`. The patch looked
+perfect. It referenced a function that has never existed. The test still failed —
+now with an error message nobody had seen before, pointing at code that was
+never there.
+
+Nothing about the answer looked like a guess. That is the whole problem. A model
+that says "I don't know" is easy to route around. A model that writes three
+paragraphs of confident, well-formatted, fictional API is not.
+
+If you don't know what kind of thing is answering you, you can't calibrate how
+much you trust it — and calibration is the difference between a tool that saves
+you an hour and one that costs you a day.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+A language model takes some text and predicts what comes next. That is it. Every
+capability people attribute to "intelligence" — writing the code, explaining the
+concept, remembering what you said, sounding like it understands — is downstream
+of that one operation, run over and over.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+It does not look anything up. There is no database of "how `oauth2` works"
+inside it. There are weights: enormous numbers, trained on an enormous amount of
+text, that encode statistical regularities of how language goes together. When
+you ask it a question, it does not find the answer. It *constructs* the most
+plausible continuation.
+
+```mermaid
+flowchart LR
+    A[Prompt text] --> B[Split into pieces]
+    B --> C[Model scores every possible next piece]
+    C --> D[Picks one, weighted by the scores]
+    D --> E[Appends it to the text]
+    E --> C
+    E --> F[Stop signal]
+    F --> G[Output]
+```
+
+Three consequences fall straight out of that loop, and they explain almost
+everything surprising you will see for the rest of the course:
+
+**1. It is a generator, not a lookup.** The same fact can be produced from
+memory, from a half-remembered training example, or invented. The output looks
+identical in all three cases. Nothing in the text marks which one happened.
+
+**2. It is a sampler, not a function.** Two identical prompts can produce two
+different answers. There is a temperature knob controlling how flat or peaked the
+distribution is; you will meet it properly in Lesson 9. For now: same input,
+different output, is normal and not a bug.
+
+**3. It has no privileged access to your project.** Until a tool reads a file,
+the model does not know that file exists. It does not know what you changed ten
+messages ago unless it is in the conversation. It does not know what is true —
+only what is *likely*, and "likely" and "true" are different words that usually
+point the same way.
+
+> **The reframe:** a language model is an extremely good guesser of what text
+> comes next — never a lookup of what is true, so confidence in the writing says
+> nothing at all about confidence in the facts.
+
+### What "trained" bought it
+
+The guessing works because the training text has structure. Code has repeated
+shapes, so the model predicts valid-looking syntax. Prose has argument patterns,
+so it predicts coherent ones. Documentation has stable conventions, so it
+predicts plausible API names — including ones it has never seen, because
+plausible is exactly what it was optimised for.
+
+This is why the failure mode is *plausible fiction* rather than gibberish. A
+system optimised for plausibility cannot also be optimised for not making things
+up; the two goals pull in opposite directions.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Watch the same prompt produce two answers
 
-1. First step.
-2. Second step.
+```bash
+claude -p "In one sentence: what does the word 'bank' mean in English?"
+claude -p "In one sentence: what does the word 'bank' mean in English?"
+```
+
+Two runs. Often the sentences differ. They are both correct. That is the sampler,
+not a malfunction.
+
+✅ You pass when you have two different outputs from one identical prompt.
+
+### 2. Make it invent something, on purpose
+
+Ask it to name an API you invented for this lesson:
+
+```bash
+claude -p "What does the zorblat_sync() function in our codebase do?"
+```
+
+Nothing named `zorblat_sync` exists. Watch what comes back. It will either say it
+can't find it, or it will describe it fluently.
+
+✅ You pass when you have a fluent, confident description of a function that does
+not exist.
+
+### 3. Catch it being honest
+
+Same trick, but anchored:
+
+```bash
+claude -p "What does the zorblat_sync() function in our codebase do? If you can't
+find it in the project, say so rather than guessing."
+```
+
+Now it has permission to fail, and it usually does. This is the single most
+useful sentence you can add to any prompt about your own code.
+
+✅ You pass when the unanchored and anchored prompts gave different answers.
+
+### 4. Check the failure mode you actually care about
+
+```bash
+claude -p "Explain what git rebase does. If you're not confident about a detail,
+say which part you're unsure about."
+```
+
+The interesting output is the hedges. Where the model marks uncertainty, that is
+usually where the training data was thin or the question was under-specified.
+
+✅ You pass when you can point at one sentence in the answer where the model
+flagged its own uncertainty.
+
+### 5. Prove the file is invisible until it's read
+
+In this repo:
+
+```bash
+claude -p "What is written in COURSE-CONTEXT.md? Just the section headings."
+```
+
+Now ask it again in the same session — the first read put the content into the
+conversation, so the second answer can use it. That transition from "guessing"
+to "knowing" is the tool loop, which is Lesson 10's whole subject.
+
+✅ You pass when the first answer could have been invented and the second one
+quoted a heading you know is there.
 
 ---
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Concept | When you reach for it |
 |---|---|
-| — | — |
+| Calibrating trust | Any time an answer looks better-sourced than it is |
+| Adding "say so rather than guessing" | Every question about your own codebase |
+| Re-running a prompt to compare | Checking whether the difference matters |
+| Treating a file as the truth | Any question about your project, not training data |
+| Watching for hedging | Locating exactly which claims are soft |
+| Expecting run-to-run variation | Never reporting a single odd output as a bug |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Write one prompt that, unanchored, produces a confident wrong answer about
+   your codebase, and that, anchored, produces an honest "not found." Paste both.
+   ✅ You pass when both outputs are in your notes and the difference is
+   explained by one sentence about anchoring, not by luck.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Ask a factual question three ways — vague, specific, and
+   "cite what in my project supports this." Record which framing produced the most
+   checkable answer.
+   ✅ You pass when you can name the framing and show two of the three outputs.
+
+3. Find one answer in this session that you now know is wrong, and write down
+   what would have told you at the time.
+   ✅ You pass when the signal is something you could look for *before* the
+   answer, not a feeling you had afterwards.
 
 ---
 
@@ -63,10 +204,36 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| hallucination | "it made something up" | Correct. It produced the most plausible continuation given its input. Plausibility was the training objective; truth was never a term in the loss. |
+| weights | "the learned knowledge" | Enormous learned numbers encoding statistical regularities of text. Not a database, not searchable, not inspectable as facts. |
+| training data | "what it knows" | Text it was fitted on. It cannot cite it, cannot check whether it is still current, and has no access to your repo. |
+| temperature | "creativity" | How flat or peaked the next-piece distribution is. Low is repetitive, high is scattered. Introduced properly in Lesson 9. |
+| confident | "it's sure" | The writing, not the model. Tone is generated, never calibrated. |
+| ground truth | "the right answer" | Whatever you can verify independently — a file, a test, a doc. The model is not a source of it. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**How it works underneath.** Attention, layers, embeddings, how training
+actually runs. This course uses models, it does not build them —
+`aiengineeringfromscratch.com` covers that properly in 542 lessons. Everything
+below "next-token prediction" is load-bearing for that, not for this.
+
+**Fine-tuning, RLHF, and distillation.** How preferences get into a model.
+Relevant only when you are choosing between models, which is Phase 03.
+
+**Embeddings and semantic search.** How similarity between texts becomes a
+number. It shows up for the first time when we talk about picking a retrieval
+strategy in Phase 13.
+
+**Context window and token counting.** Named here, taught properly in Lessons 7
+and 8. Nothing in this lesson depends on either.
+
+**Anything about tools.** Lesson 10. The point of this lesson is what the model
+is *without* them.
+
+Sources for anything version-shaped here:
+[how Claude Code works](https://code.claude.com/docs/en/how-claude-code-works)
+and the [docs index](https://code.claude.com/docs/llms.txt). Model names age
+weekly — this lesson deliberately names none.

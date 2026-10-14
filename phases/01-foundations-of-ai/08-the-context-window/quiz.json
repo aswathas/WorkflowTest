@@ -2,26 +2,52 @@
   "lesson": "01-foundations-of-ai/08-the-context-window",
   "title": "The Context Window — the only budget that matters",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about The Context Window — the only budget that matters that needs a new situation, not recall.",
+      "prompt": "Halfway through a long session you need to make sure one rule holds for the next two hours of work. Where does it belong?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "In the conversation, restated every few turns so the agent keeps seeing it",
+        "In CLAUDE.md at the project root",
+        "At the top of the file the agent will edit next",
+        "In the first message of the session, since context is stored oldest-first"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Compaction summarizes older history, so a rule that lives only in conversation is exactly what gets summarized away — and restating it just refills the window you are trying to protect. CLAUDE.md is re-injected from disk after compaction, which is the whole reason it is the durable place for a rule. Option C is seductive but wrong: a file's contents only enter context when it is read, and only that reading gets summarized away. Option D inverts the mechanism — nothing in the window is priority-ordered.",
+      "concept": "survives-compaction"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You finished a refactor and are starting an unrelated feature in the same repo. /context shows the window more than half full. What is the right move?",
+      "options": [
+        "Keep going — the window has room and clearing loses the refactor's reasoning",
+        "Run /compact with a focus note, so the old work is summarized rather than dropped",
+        "Run /clear with a name, so the new feature starts in an empty window",
+        "Ask the agent to ignore the earlier part of the conversation"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "Unrelated work does not benefit from the previous task's history — it only competes for window space and is re-paid on every turn. /clear starts the new task empty and /resume can bring the old thread back if you need it. Option B is for continuing the same task, where the history still has value. Option D asks for something the harness decides, not the model — compaction is not something a request can turn off.",
+      "concept": "clear-vs-compact"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "The window is at roughly 80% and the agent still needs to read four more files. What is the most useful thing to do before asking for those reads?",
+      "options": [
+        "Run /context, find the largest non-conversation category, and see whether it is something you actually needed",
+        "Ask the agent to work faster so it generates fewer output tokens",
+        "Switch to a model with a smaller context window to leave headroom",
+        "Nothing — the harness compacts automatically, so there is no decision to make"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
-      ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "distractors": [1, 2, 3],
+      "explanation": "/context shows the window broken down by category, so you can find out what is actually large before deciding what to do about it — that is the decision worth making. Option A's wrong turn is assuming the conversation is the problem; often it is one large file read or one command output. Option C inverts the goal: a smaller window makes the squeeze worse. Option D is half true — automatic compaction is real, but it decides what to drop for you, which is exactly the loss you are trying to avoid.",
+      "concept": "measure-before-deciding"
     }
   ]
 }

@@ -2,26 +2,52 @@
   "lesson": "01-foundations-of-ai/07-tokens-why-text-becomes-currency",
   "title": "Tokens — why text becomes currency",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Tokens — why text becomes currency that needs a new situation, not recall.",
+      "prompt": "A session has been open for three hours. You ask one more short question and the reported cost jumps. Why is the short question not cheap?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "Short prompts are billed at a higher per-token rate to discourage them",
+        "The whole conversation is sent again on every request, so the short question carries the whole session with it",
+        "Three hours of wall-clock time accrues a background charge each time you send anything",
+        "The rate limit from Lesson 11 adds a surcharge per request"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "There is no per-request premium and no time-based surcharge — the cost is a direct function of tokens sent, and every request re-sends the accumulated conversation plus files read plus tool output. Option C gestures at background requests, which exist but are tiny and would not explain a jump that scales with session length. Option D reaches forward to a lesson not yet taught and describes a limit, not a price.",
+      "concept": "resend-cost"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You must locate every caller of `parseConfig()`. Which ask is most likely to keep tokens down without losing the answer?",
+      "options": [
+        "Find every place parseConfig is used and paste each match with 40 lines of surrounding context",
+        "Search the whole repo for parseConfig and explain each hit",
+        "List the file path and line number of every call site of parseConfig. Do not read surrounding code.",
+        "Understand how configuration parsing works in this codebase, including every usage of parseConfig"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "Cost is driven by what comes back into context, and file reads plus surrounding context are permanent. Asking for path and line only returns the evidence you need. Option A looks narrower than B but the 40 lines of context multiply the read count. Option D is a comprehension task disguised as a locate task, which drags in far more files than the question requires.",
+      "concept": "narrow-the-output"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "You estimate a file's cost at characters divided by four, then the real count comes back noticeably lower. What is the most likely reason?",
+      "options": [
+        "The /4 rule only applies to prose, and code has a different average density",
+        "You counted the wrong file's characters",
+        "Common words are split into fewer tokens than the rule assumes, so the rule over-estimates",
+        "Some of the file was served from cache and not billed"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "The /4 rule assumes roughly four characters per token. High-frequency English collapses into single tokens shorter than that average, which pushes the real count below the estimate. Option A is wrong because code is usually less compressible than prose, so it skews the other way. Option D is a real mechanism but it changes latency, not the token count you are comparing against.",
+      "concept": "chars-div-four"
     }
   ]
 }

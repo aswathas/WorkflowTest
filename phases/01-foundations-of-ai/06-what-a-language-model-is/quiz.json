@@ -2,26 +2,52 @@
   "lesson": "01-foundations-of-ai/06-what-a-language-model-is",
   "title": "What a Language Model Is",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about What a Language Model Is that needs a new situation, not recall.",
+      "prompt": "You paste the same question into two fresh sessions. Both answers are fluent, they disagree on one factual detail, and neither cites a source. What is the correct reading?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "One session hit a bug and should be reported as a defect",
+        "Both answers are sampled from the same distribution, so agreement between them is not evidence either is right",
+        "The second session had a shorter context window and therefore compressed the fact",
+        "The model has two differently-tuned copies and the correct one is whichever is more detailed"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A model samples the next piece of text rather than retrieving a stored answer, so two runs can differ. Run-to-run variation is expected behaviour, not a defect — which is why repeating a query is not a way to verify it. The context-window option in C reaches for a concept from Lesson 8 and does not explain run-to-run variation, which happens with an empty window too.",
+      "concept": "sampling"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "An agent reports that your build script calls `deploy_prod(token)` and offers to wrap it in a try/except. The script is 400 lines and you have not opened it this session. What has gone wrong?",
+      "options": [
+        "The agent lacks permission to read build scripts",
+        "The function name is plausible, so the agent invented a caller rather than reading the file",
+        "The context window was already full and the read silently failed",
+        "The agent should have used a subagent to read the file instead"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Before a tool reads a file, the model has no access to it — so a specific-sounding call site is generated, not found. Option A is wrong because a permission failure produces an explicit denial, never a confident answer. Option D reaches for subagents, which arrive in Phase 06; nothing about a tool read depends on which tool performs it.",
+      "concept": "generator-not-lookup"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Which question, asked of a model, is least likely to produce confident fiction?",
+      "options": [
+        "What does the processRegistry.start() helper do in this repo?",
+        "Explain how OAuth token refresh works in general",
+        "What does the processRegistry.start() helper do in this repo? If you can't find it in the project, say so rather than guessing.",
+        "Which HTTP client should I use for a Go service?"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "Adding an explicit 'say so rather than guessing' gives the model permission to fail, which is what makes an honest 'not found' reachable. Option A is the same unanchored question and is the most dangerous of the four, because it names a real-looking symbol in a real repo. B and D invite generalities where plausible-sounding text is the expected output, not a failure.",
+      "concept": "anchoring"
     }
   ]
 }
