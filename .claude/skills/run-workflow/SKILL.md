@@ -76,6 +76,16 @@ node scripts/build-site.mjs --check  # exit 1 if the site is stale
 hand-written and they rotted immediately — a catalog listing four of nineteen
 phases, and links to three pages that did not exist.
 
+Serve it locally to check the result (no dependencies, no `package.json`):
+
+```bash
+node scripts/serve-site.mjs --port 4180   # http://127.0.0.1:4180/
+```
+
+Opening `site/index.html` from disk does not work: lesson pages use relative
+links, and the API on `/developer.html` needs a server. `serve-site.mjs`
+implements that API, so what the site documents is what the site does.
+
 ## The completion gate
 
 ```bash

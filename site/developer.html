@@ -65,6 +65,11 @@ GET /api/v1/markdown?path=/catalog</code></pre>
     <p>Every lesson is also a markdown file on disk at the canonical path:</p>
     <pre><code>phases/NN-phase-slug/NN-lesson-slug/docs/en.md</code></pre>
     <p>You can read lessons directly from the source repo, with no API in the way. The API exists for the cases where you want filtering, search, or a single source of truth.</p>
+
+    <h2>Running this locally</h2>
+    <p>The site is static and dependency-free. <code>node scripts/serve-site.mjs</code> serves it on <code>127.0.0.1:4180</code> and implements every endpoint on this page, so the API above is real rather than aspirational:</p>
+    <pre><code>node scripts/serve-site.mjs --port 4180</code></pre>
+    <p>Opening <code>site/index.html</code> from disk is not the same thing — the lesson pages use relative links, and <code>Accept: text/markdown</code> needs a server to read it.</p>
   </article>
 </main>
 </body>

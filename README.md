@@ -58,6 +58,37 @@ everything.
 
 ---
 
+## Run it locally
+
+The site is static and has no dependencies — no `package.json`, no install:
+
+```bash
+node scripts/serve-site.mjs          # http://127.0.0.1:4180/
+node scripts/serve-site.mjs --port 8080
+```
+
+Opening `site/index.html` from disk will not work properly: the lesson pages use
+relative links, and the API described on `/developer.html` needs a server. This
+one implements it, so what the site documents is what the site does:
+
+| Endpoint | Returns |
+|---|---|
+| `/api/v1/catalog?q=worktree&limit=10` | search the curriculum as JSON |
+| `/api/v1/resource?path=phases/NN/NN-slug` | a lesson's markdown source |
+| `/api/v1/markdown?path=/catalog` | any page's markdown twin |
+| `/.well-known/mcp.json` | the MCP manifest |
+| `Accept: text/markdown` on a lesson | its markdown source |
+
+Rebuild the site after editing a lesson — `catalog.html`, `glossary.html`,
+`sitemap.xml` and `llms.txt` are generated, not hand-written:
+
+```bash
+node scripts/build-site.mjs          # rebuild
+node scripts/build-site.mjs --check  # fail if the committed site is stale
+```
+
+---
+
 ## How a lesson works
 
 Every lesson follows one shape:
