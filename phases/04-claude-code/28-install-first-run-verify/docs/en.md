@@ -1,4 +1,4 @@
-# Lesson 28: Install, First Run, Verify
+# Install, First Run, Verify
 
 **Type:** Build
 **Prerequisites:** Lesson 27 (What Claude Code Is)

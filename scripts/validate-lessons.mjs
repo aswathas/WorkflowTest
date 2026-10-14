@@ -21,7 +21,6 @@ const GROUNDING = [
 ];
 
 const REQUIRED_SECTIONS = [
-  '# ',           // title
   '**Type:**',
   '**Prerequisites:**',
   '**Time:**',
@@ -93,6 +92,12 @@ for (const { phase, lesson, dir } of lessons) {
   for (const section of REQUIRED_SECTIONS) {
     if (!md.includes(section)) problems.push(`${label}: missing required section "${section.trim()}"`);
   }
+
+  // A title line, checked as a line rather than a substring. The old entry was
+  // the literal '# ', which is satisfied by every '## ' section heading — so
+  // four Phase 04 lessons lost their H1 and still passed, publishing "Untitled"
+  // as their name on the site.
+  if (!/^#\s+\S/m.test(md)) problems.push(`${label}: missing the '# ' title line`);
 
   // Exactly one reframe.
   const reframes = md.match(/\*\*The reframe:/g) ?? [];

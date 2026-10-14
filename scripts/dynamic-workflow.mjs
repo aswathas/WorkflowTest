@@ -23,7 +23,7 @@
 //                                     [--skip-site] [--dry-run]
 //
 // Exit: 0 every step succeeded; 1 planning failed; 2 authoring failed;
-//       3 validation failed; 4 site build failed.
+//       3 validation failed; 4 site build failed; 5 verification failed.
 
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
@@ -100,6 +100,13 @@ function buildSite() {
   if (res.status !== 0) throw new Error('site build failed');
 }
 
+// ── Step 5: the end-to-end gate ─────────────────────────────────────────────
+function verify() {
+  log('verify: the project-complete gate');
+  const res = node('verify-all.mjs', []);
+  if (res.status !== 0) throw new Error('verification failed');
+}
+
 // ── drive ───────────────────────────────────────────────────────────────────
 try {
   const complete = status();
@@ -113,6 +120,7 @@ try {
   else console.log('\nnothing authored this run; validating what exists.');
 
   if (!SKIP_SITE) buildSite();
+  verify();
 
   console.log('\n=== done: every step succeeded.');
   process.exit(0);
@@ -122,6 +130,7 @@ try {
     : /authoring/.test(err.message) ? 2
     : /validation/.test(err.message) ? 3
     : /site/.test(err.message) ? 4
+    : /verification/.test(err.message) ? 5
     : 2;
   process.exit(code);
 }

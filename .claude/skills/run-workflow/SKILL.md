@@ -76,6 +76,19 @@ node scripts/build-site.mjs --check  # exit 1 if the site is stale
 hand-written and they rotted immediately — a catalog listing four of nineteen
 phases, and links to three pages that did not exist.
 
+## The completion gate
+
+```bash
+node scripts/verify-all.mjs     # exit 0 only when the project is finished
+```
+
+One command, four checks: no scaffolds remain, every phase passes the
+validator, the committed site matches the corpus, and the corpus is internally
+consistent (every lesson has a title and a well-formed `quiz.json`, every
+practice module has a brief and a rubric). `dynamic-workflow.mjs` runs it as
+its last step, so "the workflow exited 0" and "the course is finished" are the
+same statement.
+
 ## Before you present results
 
 Check:
