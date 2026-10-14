@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Branches Are Movable Labels, Not Copies — Harnessing Claude Code</title>
-<meta name="description" content="You can create, switch, and delete a branch without the repository noticing">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -64,16 +61,18 @@ a bookmark.
 implementation. When you see a branch pointer in `git log`, that is the whole
 truth.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
+```mermaid
+flowchart LR
     subgraph refs
-        HEAD[HEAD&amp;lt;br/&amp;gt;points at main]
-        MAIN[main&amp;lt;br/&amp;gt;movable label]
-        FEAT[feature&amp;lt;br/&amp;gt;movable label]
+        HEAD[HEAD&lt;br/&gt;points at main]
+        MAIN[main&lt;br/&gt;movable label]
+        FEAT[feature&lt;br/&gt;movable label]
     end
-    C1[commit A] --&amp;gt; C2[commit B] --&amp;gt; C3[commit C] --&amp;gt; C4[commit D]
-    MAIN -.-&amp;gt;|points at| C2
-    FEAT -.-&amp;gt;|points at| C4
-    HEAD -.-&amp;gt;|points at| MAIN&lt;/pre&gt;&lt;/div&gt;
+    C1[commit A] --&gt; C2[commit B] --&gt; C3[commit C] --&gt; C4[commit D]
+    MAIN -.-&gt;|points at| C2
+    FEAT -.-&gt;|points at| C4
+    HEAD -.-&gt;|points at| MAIN
+```
 
 Each label points at a commit. Commits point at their parent. Nothing is copied
 when you create a branch — you write 41 bytes into a file.

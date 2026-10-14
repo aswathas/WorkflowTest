@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Terminal and Shell — Harnessing Claude Code</title>
-<meta name="description" content="After this lesson you can read what the agent is about to do, decide if it is right, and run it yourself when it is wrong.">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -52,14 +49,16 @@ The agent does not have a private channel. Every action it takes — reading a f
 
 One concept, three corollaries.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
-    A[You describe a goal] --&amp;gt; B[Agent writes a shell command]
-    B --&amp;gt; C{You read it}
-    C --&amp;gt;|looks right| D[You approve, it runs]
-    C --&amp;gt;|looks wrong| E[You type the right one]
-    D --&amp;gt; F[Output comes back]
-    E --&amp;gt; F
-    F --&amp;gt; B&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart LR
+    A[You describe a goal] --&gt; B[Agent writes a shell command]
+    B --&gt; C{You read it}
+    C --&gt;|looks right| D[You approve, it runs]
+    C --&gt;|looks wrong| E[You type the right one]
+    D --&gt; F[Output comes back]
+    E --&gt; F
+    F --&gt; B
+```
 
 The middle box — *you read it* — is the only skill this lesson teaches. Everything else is supporting muscle.
 

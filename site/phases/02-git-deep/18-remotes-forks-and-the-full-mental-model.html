@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Remotes, Forks, and the Full Mental Model — Harnessing Claude Code</title>
-<meta name="description" content="You can look at any repo and say which commits exist only on your machine,">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -88,13 +85,15 @@ normal push is rejected.
 
 ### The three categories
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
-    R[Your repo] --&amp;gt; L[Local commits&amp;lt;br/&amp;gt;on main or a branch]
-    R --&amp;gt; K[Remote-tracking record&amp;lt;br/&amp;gt;origin/main&amp;lt;br/&amp;gt;what you knew at last fetch]
-    E[Remote&amp;lt;br/&amp;gt;the shared repo] --&amp;gt; K
-    L --&amp;gt;|git push| E
-    E --&amp;gt;|git fetch| K
-    K --&amp;gt;|git merge or rebase| L&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart TD
+    R[Your repo] --&gt; L[Local commits&lt;br/&gt;on main or a branch]
+    R --&gt; K[Remote-tracking record&lt;br/&gt;origin/main&lt;br/&gt;what you knew at last fetch]
+    E[Remote&lt;br/&gt;the shared repo] --&gt; K
+    L --&gt;|git push| E
+    E --&gt;|git fetch| K
+    K --&gt;|git merge or rebase| L
+```
 
 | Category | Where it exists | How to see it |
 |---|---|---|
@@ -112,15 +111,17 @@ A **fork** is your own server-side copy of someone else's repository. You cannot
 push to a repo you do not have write access to. So: fork it, push to your fork,
 open a pull request against theirs.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;sequenceDiagram
+```mermaid
+sequenceDiagram
     participant U as Upstream repo
     participant F as Your fork
     participant Y as Your machine
     Note over U: the original
     Note over F: your server-side copy
     Note over Y: your clone of F
-    Y-&amp;gt;&amp;gt;F: git remote add upstream + fetch
-    F-&amp;gt;&amp;gt;U: pull request&lt;/pre&gt;&lt;/div&gt;
+    Y-&gt;&gt;F: git remote add upstream + fetch
+    F-&gt;&gt;U: pull request
+```
 
 Two remotes, two roles: `origin` is yours to push to, `upstream` is theirs. You
 fetch from both and push to only one.

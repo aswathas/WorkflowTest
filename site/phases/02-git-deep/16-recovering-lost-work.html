@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recovering Lost Work — Harnessing Claude Code</title>
-<meta name="description" content="Four commands cover almost every lost-work situation you will ever have — and">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -62,13 +59,15 @@ command that "destroys work" moves a label. The old commits stay in the object
 store, and the reflog records where every label pointed. Recovery is mostly
 arithmetic over that list.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
+```mermaid
+flowchart TD
     Q{What did you lose?}
-    Q --&amp;gt;|A file you edited but never committed| A[git restore / git checkout --&amp;lt;br/&amp;gt;discards the edit; commit first if you want it]
-    Q --&amp;gt;|A committed change you regret| B[git revert&amp;lt;br/&amp;gt;adds an undo commit]
-    Q --&amp;gt;|Commits you want gone, unpushed| C[git reset --soft / --mixed / --hard]
-    Q --&amp;gt;|Anything at all, "where was it?"| D[git reflog&amp;lt;br/&amp;gt;then reset back to the entry]
-    Q --&amp;gt;|Uncommitted work you need to set aside| E[git stash&amp;lt;br/&amp;gt;Lesson 17]&lt;/pre&gt;&lt;/div&gt;
+    Q --&gt;|A file you edited but never committed| A[git restore / git checkout --&lt;br/&gt;discards the edit; commit first if you want it]
+    Q --&gt;|A committed change you regret| B[git revert&lt;br/&gt;adds an undo commit]
+    Q --&gt;|Commits you want gone, unpushed| C[git reset --soft / --mixed / --hard]
+    Q --&gt;|Anything at all, "where was it?"| D[git reflog&lt;br/&gt;then reset back to the entry]
+    Q --&gt;|Uncommitted work you need to set aside| E[git stash&lt;br/&gt;Lesson 17]
+```
 
 ### The four commands, in order of how much they destroy
 

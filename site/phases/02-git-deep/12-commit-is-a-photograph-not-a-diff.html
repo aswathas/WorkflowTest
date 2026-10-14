@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Commit Is a Photograph, Not a Diff — Harnessing Claude Code</title>
-<meta name="description" content="You can choose exactly what lands in a commit — instead of discovering after">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -64,11 +61,13 @@ the whole tree at one moment, and you choose the moment.
 
 Three places, in order:
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
-    E[Editor / agent wrote files] --&amp;gt; WT[Working tree&amp;lt;br/&amp;gt;live folder on disk]
-    WT --&amp;gt;|git add| IDX[Staging area&amp;lt;br/&amp;gt;the index&amp;lt;br/&amp;gt;your draft]
-    IDX --&amp;gt;|git commit| C[Commit&amp;lt;br/&amp;gt;frozen full tree]
-    C --&amp;gt;|git diff| WT&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart LR
+    E[Editor / agent wrote files] --&gt; WT[Working tree&lt;br/&gt;live folder on disk]
+    WT --&gt;|git add| IDX[Staging area&lt;br/&gt;the index&lt;br/&gt;your draft]
+    IDX --&gt;|git commit| C[Commit&lt;br/&gt;frozen full tree]
+    C --&gt;|git diff| WT
+```
 
 **Working tree** — the live folder. Everything on disk.
 

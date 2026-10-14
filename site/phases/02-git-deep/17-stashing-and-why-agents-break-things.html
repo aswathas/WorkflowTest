@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stashing, and Why Agents Break Things — Harnessing Claude Code</title>
-<meta name="description" content="You can park half-finished work without committing it, and you can recognise">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -107,14 +104,16 @@ care what the file meant.
 
 Three shapes, and they are all mechanical:
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
-    A[Agent turn] --&amp;gt; S{What happened?}
-    S --&amp;gt;|Deleted a file it did not read| S1[Shape 1: destructive delete]
-    S --&amp;gt;|Rewrote a file repeatedly| S2[Shape 2: thrash]
-    S --&amp;gt;|Changed something outside the ask| S3[Shape 3: scope creep]
-    S1 --&amp;gt; R[Recovery: one command, if it was committed]
-    S2 --&amp;gt; R2[Recovery: read the diff, not the file]
-    S3 --&amp;gt; R3[Recovery: selective restore, one file]&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart TD
+    A[Agent turn] --&gt; S{What happened?}
+    S --&gt;|Deleted a file it did not read| S1[Shape 1: destructive delete]
+    S --&gt;|Rewrote a file repeatedly| S2[Shape 2: thrash]
+    S --&gt;|Changed something outside the ask| S3[Shape 3: scope creep]
+    S1 --&gt; R[Recovery: one command, if it was committed]
+    S2 --&gt; R2[Recovery: read the diff, not the file]
+    S3 --&gt; R3[Recovery: selective restore, one file]
+```
 
 **Shape 1 — destructive delete.** An agent deletes a file it never read,
 reasoning that it is unused. `git status` shows it immediately. `git checkout --

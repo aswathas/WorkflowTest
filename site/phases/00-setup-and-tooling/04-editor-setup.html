@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Editor Setup — Harnessing Claude Code</title>
-<meta name="description" content="An editor that fights the agent workflow costs more time than it saves.">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -86,15 +83,17 @@ This matters because the agent's job does not end at "the code compiles." The ag
 
 **The reframe:** an editor that fights the agent workflow costs more time than it saves; pick one that disappears during the four moments that matter — saving, diffing, searching, testing.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
-    A[Agent edits] --&amp;gt; B[Save]
-    B --&amp;gt; C[Format-on-save]
-    C --&amp;gt; D[Diff]
-    D --&amp;gt; E[Search references]
-    E --&amp;gt; F[Run tests]
-    F --&amp;gt; G{Pass?}
-    G --&amp;gt;|yes| H[Approve]
-    G --&amp;gt;|no| A&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart LR
+    A[Agent edits] --&gt; B[Save]
+    B --&gt; C[Format-on-save]
+    C --&gt; D[Diff]
+    D --&gt; E[Search references]
+    E --&gt; F[Run tests]
+    F --&gt; G{Pass?}
+    G --&gt;|yes| H[Approve]
+    G --&gt;|no| A
+```
 
 ## Build It
 

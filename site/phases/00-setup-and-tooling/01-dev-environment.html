@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dev Environment — Harnessing Claude Code</title>
-<meta name="description" content="After this lesson your terminal, editor and shell are configured the way this">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -58,12 +55,14 @@ I?" without thinking. Get that habit in place now and the rest is mechanical.
 Three places a command can run. Confusing them is the most common way a session
 goes wrong.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
-    A[You type a command] --&amp;gt; B{Which shell?}
-    B --&amp;gt;|your terminal| C[Your machine, your folders]
-    B --&amp;gt;|the agent's shell| D[The same machine, the session's working folder]
-    B --&amp;gt;|a server elsewhere| E[Not your files at all]
-    D -.-&amp;gt; F[Both usually agree — until one of them changes folder]&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart TD
+    A[You type a command] --&gt; B{Which shell?}
+    B --&gt;|your terminal| C[Your machine, your folders]
+    B --&gt;|the agent's shell| D[The same machine, the session's working folder]
+    B --&gt;|a server elsewhere| E[Not your files at all]
+    D -.-&gt; F[Both usually agree — until one of them changes folder]
+```
 
 The middle row is the one that surprises people. The agent does not get a
 special machine. It runs commands **in a specific folder**, and that folder was

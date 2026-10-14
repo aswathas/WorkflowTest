@@ -3,34 +3,108 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lesson 28: Install, First Run, Verify — Harnessing Claude Code</title>
-<meta name="description" content="Read the file README.md and tell me the first line.">
-<link rel="stylesheet" href="../../style.css">
+<title>Install, First Run, Verify — Harnessing Claude Code</title>
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
 <article class="lesson-article">
-  <p class="lesson-meta-tag">LESSON</p>
-  <h1>Lesson 28: Install, First Run, Verify</h1>
-  <p class="lesson-motto">Read the file README.md and tell me the first line.</p>
+  <p class="lesson-meta-tag">BUILD</p>
+  <h1>Install, First Run, Verify</h1>
+  <p class="lesson-motto">Presence is not correctness. Verify that it runs, not that the binary exists.</p>
 
   <div class="lesson-meta-block">
-    <p><strong>Type:</strong> —</p>
-    <p><strong>Prerequisites:</strong> —</p>
-    <p><strong>Time:</strong> —</p>
+    <p><strong>Type:</strong> Build</p>
+    <p><strong>Prerequisites:</strong> Lesson 27 (What Claude Code Is)</p>
+    <p><strong>Time:</strong> ~20 minutes</p>
   </div>
 
   <div class="ascii-rule"></div>
 
-  <pre style="white-space:pre-wrap;font-family:var(--font-body);font-size:1rem;line-height:1.62;background:transparent;border:0;padding:0;">## Use It
+  <pre style="white-space:pre-wrap;font-family:var(--font-body);font-size:1rem;line-height:1.62;background:transparent;border:0;padding:0;">## Learning Objectives
+
+By the end of this lesson, you can:
+
+1. Install Claude Code on your machine using the official method for your platform.
+2. Launch Claude Code from a terminal and exit it cleanly.
+3. Verify the install is *real*: the tool launches, reads a file, and answers one instruction.
+4. Re-run the Phase 00 setup-check script and read its verdict on the `claude` entry.
+5. Update or uninstall Claude Code using the same three-command lifecycle.
+
+## The Problem
+
+You run the install command. The terminal prints a path. You type `claude` and it runs. So it's working.
+
+Or so you think.
+
+This is the failure mode Phase 00 warned about: a shim on `PATH` that prints a version number and exits. The binary exists. The tool does not work. You cannot tell the difference from the outside until you ask the tool to do something.
+
+Lesson 5 told the same story with a different tool. The fix is the same fix: do not trust that the install command succeeded. Trust the *use* of the tool.
+
+## The Concept
+
+Three commands. One per platform for install. One for verify. One for update.
+
+```
+# macOS / Linux / WSL: the official install command from the docs
+# Windows (native): the official install command for Windows from the docs
+# pick the one for YOUR machine
+```
+
+The principle, restated: **The reframe: presence is not correctness.** A successful install is one where you can ask the tool to do one thing and it does it. Not one where the binary exists.
+
+The verification step matters because it is the only way to tell a working install from a shim.
+
+## Build It
+
+Numbered. End each step with a check.
+
+**Step 1 — Install.** Run the install command for your OS from the official source. The command is one line. Do not improvise it. Do not copy a blog post. Do not follow a Stack Overflow answer. Use the official docs page for your platform.
+
+Check: the install prints a success line. If it printed an error, fix that first. Do not proceed.
+
+**Step 2 — Launch once.** Open a terminal in any directory. Type the launch command. Wait for the prompt.
+
+```
+claude
+```
+
+You should see Claude Code's interface. If you see "command not found," the install failed or the binary is not on your `PATH`. Stop and fix this before going further.
+
+To leave: type `/exit` and press Enter. (Slash commands are covered properly in Lesson 30. For now, just know `/exit` exists.)
+
+Check: you exited cleanly back to your shell prompt.
+
+**Step 3 — Read a file from a directory.** From inside a project directory you trust, launch Claude Code and ask it to read one specific file. Pick a file you know exists.
+
+```
+claude
+&gt; Read the file README.md and tell me the first line.
+```
+
+A working install answers. A shim, even a clever one, does not.
+
+Check: the tool returned the first line of the file. If it did not, the install is not real. Go back to Step 1.
+
+**Step 4 — Re-run setup-check.sh.** From your project root (the same place you ran it in Phase 00), run:
+
+```
+./scripts/setup-check.sh
+```
+
+Look at the line for `claude`. After a real install, the entry should report `ok` — your script's "real binary" marker, the one that distinguishes it from the `MISS` or `shim` state from Phase 00.
+
+Check: the `claude` line is no longer flagged as missing or shim.
+
+**Step 5 — Know the lifecycle commands.** You do not need to run update or uninstall now. Just know they exist. The table below has them.
+
+## Use It
 
 | Action | Command | Notes |
 |---|---|---|

@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Merge and Rebase — Harnessing Claude Code</title>
-<meta name="description" content="You can tell the difference between "combining two lines of work" and">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -62,9 +59,11 @@ They disagree about what the answer should look like afterwards.
 
 **Merge** keeps both lines and records the join:
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
-    A1[A] --&amp;gt; A2[B] --&amp;gt; M[M: merge commit]
-    B2 --&amp;gt; M&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart LR
+    A1[A] --&gt; A2[B] --&gt; M[M: merge commit]
+    B2 --&gt; M
+```
 
 History shows that two lines existed and were combined. Nobody's commits are
 rewritten, so a merge is safe on shared history.
@@ -72,9 +71,11 @@ rewritten, so a merge is safe on shared history.
 **Rebase** moves your commits to sit on top of the other line, as if you had
 written them there:
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
-    A1[A] --&amp;gt; A2[B]
-    A2 --&amp;gt; R1[C'] --&amp;gt; R2[D']&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart LR
+    A1[A] --&gt; A2[B]
+    A2 --&gt; R1[C'] --&gt; R2[D']
+```
 
 Your commit `C` is replaced by a new commit `C'` with the same message and the
 same change, but a different parent — so a different hash. That is why rebasing

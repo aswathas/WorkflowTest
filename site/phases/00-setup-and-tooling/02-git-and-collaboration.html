@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Git as Your Safety Net — Harnessing Claude Code</title>
-<meta name="description" content=""The agent just rewrote six files and three of them are broken." — every developer, eventually.">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -62,10 +59,12 @@ A file in a git project lives in one of four states:
 
 The flow moves in one direction: working tree to staging area to local repository to remote.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
-    A[Working Tree] --&amp;gt;|git add| B[Staging Area]
-    B --&amp;gt;|git commit| C[Local Repo]
-    C --&amp;gt;|git push| D[Remote]&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart LR
+    A[Working Tree] --&gt;|git add| B[Staging Area]
+    B --&gt;|git commit| C[Local Repo]
+    C --&gt;|git push| D[Remote]
+```
 
 The key mental shift: every agent run that changes a file should end with a commit. If the change is wrong, you roll back the commit. If the commit is good, you push it to the remote.
 

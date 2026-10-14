@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Conflicts: What They Are, How They Resolve — Harnessing Claude Code</title>
-<meta name="description" content="You can read a conflict, decide what the merged line should say, and commit">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -89,15 +86,17 @@ side. This is the single most common way people silently discard work.
 
 ### Three ways out
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
-    C[Conflict markers in file] --&amp;gt; D{Is this region a text choice&amp;lt;br/&amp;gt;or a logic choice?}
-    D --&amp;gt;|Text: two versions of the same line| M[Delete the markers, keep the correct line]
-    D --&amp;gt;|Both edits are real and belong together| B[Keep both, combine by hand]
-    D --&amp;gt;|One side is obsolete| O[Take one side deliberately&amp;lt;br/&amp;gt;then verify the surrounding code]
-    M --&amp;gt; S[git add the file]
-    B --&amp;gt; S
-    O --&amp;gt; S
-    S --&amp;gt; F[git rebase --continue / git commit]&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart TD
+    C[Conflict markers in file] --&gt; D{Is this region a text choice&lt;br/&gt;or a logic choice?}
+    D --&gt;|Text: two versions of the same line| M[Delete the markers, keep the correct line]
+    D --&gt;|Both edits are real and belong together| B[Keep both, combine by hand]
+    D --&gt;|One side is obsolete| O[Take one side deliberately&lt;br/&gt;then verify the surrounding code]
+    M --&gt; S[git add the file]
+    B --&gt; S
+    O --&gt; S
+    S --&gt; F[git rebase --continue / git commit]
+```
 
 A conflict is a decision, not a merge algorithm's leftover work. The three
 outcomes are: pick, combine, discard — and discarding is legitimate when the

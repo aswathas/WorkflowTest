@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Debugging and Profiling — Harnessing Claude Code</title>
-<meta name="description" content="When the agent goes wrong, the agent is rarely the cause. The environment is.">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -57,14 +54,16 @@ The rest of this lesson is those three skills. They are not agent-specific. They
 
 When a session goes wrong, place the cause in one of three boxes. Most sessions end with the cause in box 1.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart TD
-    A[Session goes wrong] --&amp;gt; B{Where is the cause?}
-    B --&amp;gt;|Environment wrong| C[wrong folder, missing key,&amp;lt;br/&amp;gt;stale cache, bad version]
-    B --&amp;gt;|Inputs wrong| D[bad prompt, missing context,&amp;lt;br/&amp;gt;ambiguous spec, stale file]
-    B --&amp;gt;|Model wrong| E[actually the model,&amp;lt;br/&amp;gt;rare but real]
-    C -.-&amp;gt;|fix once| F[session works]
-    D -.-&amp;gt;|rewrite the request| F
-    E -.-&amp;gt;|change model or task| F&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart TD
+    A[Session goes wrong] --&gt; B{Where is the cause?}
+    B --&gt;|Environment wrong| C[wrong folder, missing key,&lt;br/&gt;stale cache, bad version]
+    B --&gt;|Inputs wrong| D[bad prompt, missing context,&lt;br/&gt;ambiguous spec, stale file]
+    B --&gt;|Model wrong| E[actually the model,&lt;br/&gt;rare but real]
+    C -.-&gt;|fix once| F[session works]
+    D -.-&gt;|rewrite the request| F
+    E -.-&gt;|change model or task| F
+```
 
 **Box 1: environment.** The folder is wrong. The API key is missing. A cached build is stale. A dependency is one version off. These never fix themselves by retrying the prompt.
 

@@ -4,16 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Open-Weight vs Frontier — Harnessing Claude Code</title>
-<meta name="description" content="After this lesson you choose which model to use on purpose, knowing what each choice costs in money, privacy, and offline access.">
-<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../../style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="../../index.html">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="../../catalog.html">← Catalog</a>
-    </nav>
+    <a class="logo" href="../../../index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="../../../catalog.html">Catalog</a><a href="../../../glossary.html">Glossary</a><a href="../../../llms.txt">llms.txt</a><a href="../../../developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -72,11 +69,13 @@ The size column is not the point. Some open-weight models are huge. Some frontie
 
 **The reframe:** the difference between open-weight and frontier is whether the weights are public, not how big the model is.
 
-&lt;div class="mermaid"&gt;&lt;pre&gt;flowchart LR
-  A[You] --&amp;gt;|download weights once| B[Open-weight&amp;lt;br/&amp;gt;runs on your laptop]
-  A --&amp;gt;|pay per call| C[Frontier&amp;lt;br/&amp;gt;runs in a datacenter]
-  B --&amp;gt; D[Cost: electricity&amp;lt;br/&amp;gt;Privacy: local&amp;lt;br/&amp;gt;Offline: yes]
-  C --&amp;gt; E[Cost: per call&amp;lt;br/&amp;gt;Privacy: leaves machine&amp;lt;br/&amp;gt;Offline: no]&lt;/pre&gt;&lt;/div&gt;
+```mermaid
+flowchart LR
+  A[You] --&gt;|download weights once| B[Open-weight&lt;br/&gt;runs on your laptop]
+  A --&gt;|pay per call| C[Frontier&lt;br/&gt;runs in a datacenter]
+  B --&gt; D[Cost: electricity&lt;br/&gt;Privacy: local&lt;br/&gt;Offline: yes]
+  C --&gt; E[Cost: per call&lt;br/&gt;Privacy: leaves machine&lt;br/&gt;Offline: no]
+```
 
 ---
 

@@ -3,21 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Harnessing Claude Code</title>
-<meta name="description" content="From zero to graph engineering on AI agents — for people who use them.">
+<title>Home — Harnessing Claude Code</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="site">
   <div class="container">
-    <a class="logo" href="/">■ HARNESSING CLAUDE CODE</a>
-    <nav>
-      <a href="catalog.html">Catalog</a>
-      <a href="prereqs.html">Roadmap</a>
-      <a href="glossary.html">Glossary</a>
-      <a href="about.html">About</a>
-      <a href="llms.txt">llms.txt</a>
-    </nav>
+    <a class="logo" href="index.html">■ HARNESSING CLAUDE CODE</a>
+    <nav><a href="catalog.html">Catalog</a><a href="glossary.html">Glossary</a><a href="llms.txt">llms.txt</a><a href="developer.html">Developer</a></nav>
   </div>
 </header>
 
@@ -25,7 +18,7 @@
   <section>
     <p class="lesson-meta-tag">HARNESSING / CLAUDE CODE</p>
     <h1>From zero to graph engineering on AI agents — for people who use them.</h1>
-    <p class="lesson-motto">A free, open-source course. 119 lessons across 20 phases. MCP, hooks, plugins, worktree isolation, dynamic workflows, harness engineering, task graphs.</p>
+    <p class="lesson-motto">A free, open-source course. 119 lessons across 19 phases. MCP, hooks, plugins, worktree isolation, dynamic workflows, harness engineering, task graphs.</p>
 
     <div class="ascii-rule"></div>
 
@@ -41,6 +34,7 @@
         <tr><td>See the whole map</td><td><a href="catalog.html">Catalog</a></td></tr>
         <tr><td>Give an agent the full context</td><td><code>llms.txt</code></td></tr>
         <tr><td>Start learning now</td><td><a href="phases/00-setup-and-tooling/01-dev-environment.html">Lesson 00.1 — Dev Environment</a></td></tr>
+        <tr><td>Look a term up</td><td><a href="glossary.html">Glossary</a></td></tr>
         <tr><td>Understand the repo</td><td><a href="developer.html">Developer / API</a></td></tr>
       </tbody>
     </table>
@@ -56,22 +50,33 @@
         <tr><td><code>/write-lesson</code></td><td>Author a new lesson</td></tr>
       </tbody>
     </table>
+    <p>Authoring the corpus itself is also a workflow: <code>node scripts/dynamic-workflow.mjs</code> reports what is missing, authors it in isolated worktrees, validates, and rebuilds this site. See <a href="developer.html">Developer</a>.</p>
 
     <h2>What you will learn</h2>
     <ul>
-      <li><span class="status-square complete"></span> <strong>Phase 0 — Setup &amp; Tooling.</strong> Tools shape thinking. Five lessons on environment, git, terminal, editor, debugging.</li>
-      <li><span class="status-square in-progress"></span> <strong>Phase 3 — Models &amp; Families.</strong> Open-weight vs frontier, when small wins, the decision-model line.</li>
-      <li><span class="status-square planned"></span> <strong>Phase 4 — Claude Code.</strong> The agentic loop, sessions, permissions, settings, plan mode, checkpoints, troubleshooting.</li>
-      <li><span class="status-square planned"></span> <strong>Phase 5 — Skills, subagents, MCP, hooks, plugins.</strong> The extension layer.</li>
-      <li><span class="status-square planned"></span> <strong>Phase 8 — Memory &amp; instructions.</strong> CLAUDE.md, AGENTS.md, rules, output styles, imports.</li>
-      <li><span class="status-square planned"></span> <strong>Phase 11–12 — Parallelism I &amp; II.</strong> Five distinct names, isolation, the agentic loop's parallel version.</li>
-      <li><span class="status-square planned"></span> <strong>Phase 13–14 — Context &amp; harness engineering.</strong> Context as architecture. The loop minus the intelligence.</li>
-      <li><span class="status-square planned"></span> <strong>Phase 15 — Graph engineering.</strong> Nodes, edges, the frontier, the critical path.</li>
+      <li><span class="status-square complete"></span> <strong>Phase 00 — Setup &amp; Tooling.</strong> Your tools shape your thinking. Set them up once. (5/5)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 01 — Foundations of AI.</strong> The words everything else leans on. (6/6)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 02 — Git Deep.</strong> Commit = photograph. Branch = label. `worktree` hides `working tree`. (7/7)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 03 — Models &amp; Families.</strong> Open-weight vs frontier. What actually costs money. (8/8)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 04 — Claude Code.</strong> The tool, from first run to fluency. (11/11)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 05 — Commands &amp; Skills.</strong> The most flexible extension layer. (7/7)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 06 — Subagents.</strong> Context isolation. (4/4)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 07 — MCP.</strong> A protocol, not a tool. (6/6)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 08 — Hooks.</strong> Events on the loop. Enforcement, not requests. (6/6)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 09 — Plugins.</strong> The packaging layer. Comes last for a reason. (4/4)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 10 — Memory &amp; Instructions.</strong> How context persists. (6/6)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 11 — Parallelism I.</strong> The five names, and why they're different. (6/6)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 12 — Parallelism II.</strong> Orchestration. (9/9)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 13 — Context Engineering.</strong> Context as architecture. (5/5)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 14 — Harness Engineering.</strong> The loop minus the intelligence. (7/7)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 15 — Graph Engineering.</strong> Nodes, edges, and what genuinely parallelizable means. (8/8)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 16 — Worktrees in Practice.</strong> Deep on the one you came for. (5/5)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 17 — Scaling &amp; Operations.</strong> Running it for real. (5/5)</li>
+      <li><span class="status-square complete"></span> <strong>Phase 18 — Capstone.</strong> Ship it. (4/4)</li>
     </ul>
 
     <p><a class="button primary" href="phases/00-setup-and-tooling/01-dev-environment.html" style="display:inline-block;text-decoration:none;background:var(--blueprint);color:#fff;padding:0.5em 1em;box-shadow:var(--shadow-hard);">Start with Phase 0 →</a></p>
   </section>
 </main>
-
 </body>
 </html>
