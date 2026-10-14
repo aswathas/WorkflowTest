@@ -46,13 +46,16 @@ function workspace(phase) {
 async function author(phase) {
   const dir = workspace(phase);
   console.log(`\n=== ${phase} -> ${dir}`);
+  // `node` by name, not process.execPath: the Windows path under "C:\Program
+  // Files\" is fine without a shell and fatal with one (ENOENT on the space).
   const code = await new Promise((resolve) => {
     const child = spawn(
-      process.execPath,
-      [join(ROOT, 'scripts', 'write-phase.mjs'), phase],
-      { cwd: dir, stdio: 'inherit', shell: false },
+      'node',
+      [join(dir, 'scripts', 'write-phase.mjs'), phase],
+      { cwd: dir, stdio: 'inherit', shell: true },
     );
     child.on('close', resolve);
+    child.on('error', () => resolve(-1));
   });
 
   // A worker that exits without a commit lost nothing — but did nothing.
