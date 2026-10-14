@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 0001 — The Safety Net</title>
+<link rel="stylesheet" href="../assets/lesson.css">
+<style>
+  .fb { display: none; margin: 0.7rem 0 0; padding: 0.6rem 0.8rem; border-radius: 3px; font-size: 0.92rem; }
+  .fb.correct { background: var(--good-soft); color: var(--good); }
+  .fb.wrong { background: var(--bad-soft); color: var(--bad); }
+
+  .quiz {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 1.05rem 1.2rem;
+    margin: 0 0 1.5rem;
+  }
+  .quiz fieldset { border: 0; margin: 0; padding: 0; }
+  .quiz legend { font-weight: 600; padding: 0; margin-bottom: 0.55rem; font-size: 0.98rem; }
+  .quiz label {
+    display: block;
+    padding: 0.32rem 0.4rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .quiz label:hover { background: var(--paper); }
+  .quiz input { margin-right: 0.5rem; }
+
+  .commit-visual {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-family: var(--mono); font-size: 0.8rem;
+    margin: 0 0 1.3rem; flex-wrap: wrap;
+  }
+  .commit-visual .node {
+    border: 1.5px solid var(--rule); border-radius: 50%;
+    width: 2.1rem; height: 2.1rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--paper); color: var(--ink-soft);
+  }
+  .commit-visual .node.head { border-color: var(--accent); border-width: 2.5px; color: var(--accent); font-weight: 700; }
+  .commit-visual .arrow { color: var(--ink-faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="lesson">
+  <p class="eyebrow">Lesson 0001 &middot; Foundations</p>
+  <h1>The Safety Net</h1>
+  <p class="subtitle">Why a "worktree" is just a safety net you can walk back through</p>
+</header>
+
+<p>You said the thing you fear most is <strong>lost or corrupted work</strong>. Good — that fear is the right one, and it's the reason the rest of this course exists. Before we touch any of Claude Code's four parallel tools, you need one thing underneath them all.</p>
+
+<h2>A commit is a photograph</h2>
+
+<p>Most people's mental model of git is "save button with extra steps." That's why it feels dangerous. The real model is simpler and safer than that:</p>
+
+<blockquote>A commit is a photograph of your entire project at one moment, with a label.</blockquote>
+
+<p>Not a diff. Not a list of changes. <em>The whole thing</em>, frozen, with a name you chose. Git keeps every photograph you've ever taken, forever, in a row.</p>
+
+<div class="commit-visual">
+  <span class="node">c1</span><span class="arrow">&rarr;</span>
+  <span class="node">c2</span><span class="arrow">&rarr;</span>
+  <span class="node">c3</span><span class="arrow">&rarr;</span>
+  <span class="node head">c4</span>
+  <span style="color:var(--ink-faint);margin-left:0.5rem">you are here</span>
+</div>
+
+<p>If an agent destroys your code, the answer isn't "carefully next time." The answer is: you're standing at <code>c4</code>, and <code>c3</code> is still right there.</p>
+
+<aside class="callout">
+  <span class="label">The one sentence</span>
+  <p>Git does not let you lose work. It lets you lose <em>time</em>. Those feel different at 2am.</p>
+</aside>
+
+<h2>Working tree vs commit</h2>
+
+<p>Two words that cause most of the confusion. And you will need them for lesson 0002, because "worktree" is a compound word that uses both.</p>
+
+<table>
+  <thead><tr><th>Term</th><th>What it is</th><th>Analogy</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>working tree</strong></td>
+      <td>The live folder on your disk. Where unsaved edits sit. Fragile.</td>
+      <td>Your desk</td>
+    </tr>
+    <tr>
+      <td><strong>commit</strong></td>
+      <td>One frozen snapshot in git's permanent history.</td>
+      <td>A photograph in a drawer</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An agent editing a file changes the <strong>working tree</strong>. That is the dangerous state — nothing is recorded yet. A <strong>commit</strong> is what makes it safe.</p>
+
+<aside class="risk">
+  <span class="label">This is the bug we hit earlier</span>
+  <p>Recall the experiment: three agents produced perfect isolated work, and <strong>none of them committed</strong>. Their branches were empty labels pointing at the same commit. All that work existed only as loose files on disk — one bad command away from gone.</p>
+  <p>This is the single most important practical habit in this whole course: <strong>isolation without a commit is not a backup.</strong></p>
+</aside>
+
+<h2>Now: what a branch is</h2>
+
+<p>A branch is not a copy of your files. This is the myth that makes git feel dangerous.</p>
+
+<p>A branch is <strong>a movable label pointing at one commit</strong>. Creating a branch costs nothing and copies nothing. It's an arrow.</p>
+
+<aside class="callout">
+  <span class="label">The reframe</span>
+  <p>You don't "make a copy to be safe." You make a <em>label</em> to mark where you are. That's why branches are instant and cost nothing — there's nothing to copy.</p>
+</aside>
+
+<h2>So what IS a worktree?</h2>
+
+<p>Now the word makes sense. It is <strong>a working tree on a different branch</strong>.</p>
+
+<pre><code>worktree = a second working tree + a branch label pointing elsewhere</code></pre>
+
+<p>Two separate things, glued together:</p>
+
+<ul>
+  <li><strong>the working tree</strong> — a real folder on disk where edits are fragile</li>
+  <li><strong>the branch</strong> — a label marking which commit you're building on</li>
+</ul>
+
+<p>That's why a worktree makes work safe on two axes at once. If the folder gets wrecked, the branch label still points at your last good commit. If the branch gets confused, the folder still has your files. Either one alone would be a weaker guarantee.</p>
+
+<aside class="safe">
+  <span class="label">Run this yourself</span>
+  <p>You've already done this. In this very repo:</p>
+  <div class="terminal"><span class="prompt">git log --oneline</span>
+
+7b795ec chore: scaffold toy project with failing stubs
+a95a6b9 feat(a): implement shout
+86377f8 feat(b): implement double
+91f1e1d feat(c): implement sum
+308941f feat(d): add triple with tests and README</div>
+  <p>Every line is a photograph. The agents' work from two experiments ago is sitting right there, still perfect, still labelled.</p>
+</aside>
+
+<h2>Check yourself</h2>
+
+<div class="quiz" data-answer="1"
+     data-note="That's it. Everything else follows from this one fact."
+     data-hint="A commit stores the entire project state, not just what changed.">
+  <fieldset>
+    <legend>1. A commit stores…</legend>
+    <label><input type="radio" value="0"> Only the files you edited</label>
+    <label><input type="radio" value="1"> The entire project, frozen</label>
+    <label><input type="radio" value="2"> A list of instructions to replay</label>
+  </fieldset>
+  <p class="fb"></p>
+</div>
+
+<div class="quiz" data-answer="2"
+     data-note="Exactly. Nothing is copied — that is why branches are instant and free."
+     data-hint="Think about how many megabytes a full project copy would be.">
+  <fieldset>
+    <legend>2. Creating a branch copies your files?</legend>
+    <label><input type="radio" value="0"> Yes, a full copy on disk</label>
+    <label><input type="radio" value="1"> Only tracked source files</label>
+    <label><input type="radio" value="2"> No — just a movable label</label>
+  </fieldset>
+  <p class="fb"></p>
+</div>
+
+<div class="quiz" data-answer="0"
+     data-note="Right — and this is the habit that keeps parallel agents safe."
+     data-hint="Consider what happened to the three agents that never committed.">
+  <fieldset>
+    <legend>3. Why must each agent commit its own work?</legend>
+    <label><input type="radio" value="0"> Otherwise the work is unrecoverable</label>
+    <label><input type="radio" value="1"> Git rejects uncommitted branches</label>
+    <label><input type="radio" value="2"> Commits run the test suite</label>
+  </fieldset>
+  <p class="fb"></p>
+</div>
+
+<div class="ask">
+  <span class="label">Your turn</span>
+  <p>Run <code>git log --oneline</code> in this repo. Then answer these three out loud, or just type them:</p>
+  <p>1. What is the newest photograph?<br>
+  2. What does it say at the end of its message?<br>
+  3. If you deleted every file right now, what single command brings it all back?</p>
+  <p>Question 3 is the whole point of this lesson. If you can answer it without hesitating, you're ready for lesson 0002.</p>
+</div>
+
+<div class="source">
+  <span class="label">Primary source &middot; read this</span>
+  <p><a href="https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes">Pro Git &mdash; Ch. 2: Recording Changes</a></p>
+  <p>Then, if you want the visual version that most people learn fastest from:
+  <a href="https://learngitbranching.js.org">Learn Git Branching</a> &mdash; interactive, no setup, and it makes branches click.</p>
+</div>
+
+<nav class="lesson-nav">
+  <a href="../reference/git-primer.html">&larr; Git primer (reference)</a>
+  <span>Lesson 0002 &middot; worktrees in practice &rarr;</span>
+</nav>
+
+<div class="ask">
+  <span class="label">Stuck on anything?</span>
+  <p>Ask me. That's what I'm for — the "teacher" part. Nothing above is too basic to ask about.</p>
+</div>
+
+</div>
+<script src="../assets/quiz.js"></script>
+</body>
+</html>

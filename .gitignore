@@ -1,2 +1,7 @@
 node_modules/
 .claude/worktrees/
+learning-records/
+reference/
+assets/
+practice/*/attempts/
+site/node_modules/
