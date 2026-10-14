@@ -131,8 +131,12 @@ function author(phase) {
       console.log(`=== ${phase}: exit=${code} committed=${committed} "${subject}"`);
       resolve({
         phase, ...wt, code, committed,
-        ok: code === 0 && committed,
-        reason: committed ? null : 'worker exited without committing',
+        // The commit is the contract, not the exit code. opencode has exited
+        // non-zero after committing a perfectly good phase (phase 12), and
+        // skipping that merge threw away 3259 lines of validated work. Whether
+        // the content is any good is the post-merge validator's call.
+        ok: committed,
+        reason: committed ? null : `worker exited ${code} without committing`,
       });
     });
   });
