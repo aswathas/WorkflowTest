@@ -83,14 +83,16 @@ Prereq: Phase 01. Lessons 19–26.
 | 22 | Prompt Caching — why switching models makes a turn slow | `03-models-and-families/22-prompt-caching` |
 | 23 | Quantization, Distillation, Fine-Tuning | `03-models-and-families/23-quantization-distillation-fine-tuning` |
 | 24 | **SLMs — When a 350M Model Wins** | `03-models-and-families/24-slms-when-a-small-model-wins` |
-| 25 | **Decision Models — Jev, Jeff, and the LFM line** | `03-models-and-families/25-decision-models` |
-| 26 | **The Taxonomy: LLM / Jev / Jeff / LFM** | `03-models-and-families/26-the-taxonomy` |
+| 25 | **Decision Models Beat Generation on Cost** | `03-models-and-families/25-decision-models` |
+| 26 | **The Taxonomy: LLM / Decision Model / SLM** | `03-models-and-families/26-the-taxonomy` |
 
 **Module 03.1** — Route a real workload across model tiers. Find where the frontier model was wasted. (`Instrument`)
 → `practice/03-route-a-workload`
 
-Unverified: lessons 25–26 name model families this repo has not confirmed exist.
-Verify before writing; cut the names rather than title a lesson on a guess.
+Decision-models material names the pattern, not products. Jev, Jeff, LFM, and similar
+families are referenced as *examples of the pattern* in lesson prose, not as lesson titles.
+If a specific product name is verified later, the lesson is renamed in place; until then,
+the pattern is the lesson.
 
 ---
 
