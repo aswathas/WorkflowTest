@@ -313,6 +313,7 @@ function head(title, depth, description = '') {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} — ${SITE_NAME}</title>
 <meta name="description" content="${esc(description || SITE_TAGLINE)}">
+<link rel="stylesheet" href="${p}fonts.css">
 <link rel="stylesheet" href="${p}style.css">
 ${THEME_SCRIPT}
 </head>

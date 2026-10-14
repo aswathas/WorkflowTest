@@ -56,6 +56,9 @@ jobs:
       - name: Fail if the committed site was stale
         run: node scripts/build-site.mjs --check
 
+      - name: Verify the whole corpus
+        run: node scripts/verify-all.mjs
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

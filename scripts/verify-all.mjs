@@ -48,12 +48,28 @@ add('every phase passes validate-lessons.mjs', bad.length === 0, bad.join('; '))
 const site = run('build-site.mjs', ['--check']);
 add('site is not stale', site.status === 0, (site.stderr || '').split('\n').slice(0, 4).join(' | '));
 
-// ── 4. the palette is readable in both themes ───────────────────────────────
+// ── 4. every referenced webfont is actually present ─────────────────────────
+// The stylesheet names three families. For a long time nothing loaded them and
+// the site silently rendered in Georgia and Consolas. A missing .woff2 is a
+// silent regression, so check the files the CSS points at.
+const fontsCss = join(ROOT, 'site', 'fonts.css');
+const fontProblems = [];
+if (!existsSync(fontsCss)) {
+  fontProblems.push('site/fonts.css is missing — run scripts/fetch-fonts.mjs');
+} else {
+  for (const m of readFileSync(fontsCss, 'utf8').matchAll(/url\('([^']+)'\)/g)) {
+    const file = join(ROOT, 'site', m[1]);
+    if (!existsSync(file) || statSync(file).size === 0) fontProblems.push(m[1]);
+  }
+}
+add('every referenced webfont is present', fontProblems.length === 0, fontProblems.join(', '));
+
+// ── 5. the palette is readable in both themes ───────────────────────────────
 const contrast = run('check-contrast.mjs', []);
 add('palette clears WCAG AA in both themes', contrast.status === 0,
   (contrast.stdout || '').split('\n').filter((l) => l.includes('✗') || /worst/.test(l)).join(' | '));
 
-// ── 5. corpus consistency ───────────────────────────────────────────────────
+// ── 6. corpus consistency ───────────────────────────────────────────────────
 const problems = [];
 let lessons = 0;
 for (const { phase } of gaps) {
