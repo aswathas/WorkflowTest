@@ -162,9 +162,14 @@ const PRACTICE_DIR = join(ROOT, 'practice');
 const BRIEF_SKELETON = [/Fill this in/, /\[your artifact \+ evidence\]/];
 
 if (existsSync(PRACTICE_DIR)) {
+  // A phase filter must scope the modules too, or `validate-lessons.mjs 04`
+  // reports 18 unrelated unwritten modules and the phase looks unfinished
+  // forever. Module dirs are prefixed with the phase number they belong to.
+  const phaseNum = process.argv[2]?.slice(0, 2);
   for (const mod of readdirSync(PRACTICE_DIR)) {
     const dir = join(PRACTICE_DIR, mod);
     if (mod === 'TEMPLATE' || !statSync(dir).isDirectory()) continue;
+    if (phaseNum && !mod.startsWith(phaseNum)) continue;
     for (const file of ['BRIEF.md', 'RUBRIC.md']) {
       const p = join(dir, file);
       if (!existsSync(p)) {

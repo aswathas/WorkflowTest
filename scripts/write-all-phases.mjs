@@ -16,9 +16,18 @@ const argv = process.argv.slice(2);
 const ci = argv.indexOf('--concurrency');
 const CONCURRENCY = ci === -1 ? 4 : Number(argv[ci + 1]);
 
-const phases = readdirSync(join(ROOT, 'phases')).sort();
 const git = (...args) =>
   spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', shell: true });
+
+// A phase whose lessons and module already validate is done. Re-running a worker
+// on it costs a session and can only make the text worse.
+const authored = (phase) =>
+  spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-lessons.mjs'), phase],
+    { cwd: ROOT, encoding: 'utf8', shell: true }).status === 0;
+
+const phases = readdirSync(join(ROOT, 'phases'))
+  .sort()
+  .filter((p) => argv.includes('--force') || !authored(p));
 
 /** One worktree + branch per phase, off current HEAD. */
 function workspace(phase) {
