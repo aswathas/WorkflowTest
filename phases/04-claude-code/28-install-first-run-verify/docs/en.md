@@ -1,5 +1,7 @@
 # Install, First Run, Verify
 
+> Presence is not correctness. Verify that it runs, not that the binary exists.
+
 **Type:** Build
 **Prerequisites:** Lesson 27 (What Claude Code Is)
 **Time:** ~20 minutes

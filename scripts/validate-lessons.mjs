@@ -99,6 +99,15 @@ for (const { phase, lesson, dir } of lessons) {
   // as their name on the site.
   if (!/^#\s+\S/m.test(md)) problems.push(`${label}: missing the '# ' title line`);
 
+  // The one-line hook under the title. Template: '> One line. What is different
+  // after this lesson that wasn't before.' Seven Phase 04 lessons shipped
+  // without it, so the title read as the whole introduction.
+  const afterTitle = md.slice(md.search(/^#\s+\S/m)).split(/\r?\n/).slice(1);
+  const firstContent = afterTitle.find((l) => l.trim());
+  if (firstContent && !firstContent.trim().startsWith('>')) {
+    problems.push(`${label}: no '>' hook line under the title`);
+  }
+
   // Exactly one reframe.
   const reframes = md.match(/\*\*The reframe:/g) ?? [];
   if (reframes.length !== 1) {
