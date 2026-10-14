@@ -29,7 +29,10 @@ const CHECK = process.argv.includes('--check');
 
 const SITE_NAME = 'Harnessing Claude Code';
 const SITE_TAGLINE = 'From zero to graph engineering on AI agents — for people who use them.';
-const CANONICAL = 'https://harnessing.example';
+// The canonical origin for sitemap.xml and llms.txt. Override with SITE_URL
+// when hosting elsewhere; the default is the GitHub Pages project URL, which is
+// derived from the repository name (aswathas.github.io/<repo>).
+const CANONICAL = process.env.SITE_URL || 'https://aswathas.github.io/agent101';
 
 const LESSON_SKELETON = [/^\s*>\s*Skeleton\./m, /Replace this placeholder/];
 const BRIEF_SKELETON = [/Fill this in/, /\[your artifact \+ evidence\]/];

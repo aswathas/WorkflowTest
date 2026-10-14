@@ -3,7 +3,7 @@
 > From zero to graph engineering on AI agents — for people who use them.
 > 119 lessons across 19 phases. The path is the URL.
 
-Canonical site: https://harnessing.example
+Canonical site: https://aswathas.github.io/agent101
 Lessons authored: 119 of 119. Practice modules: 19 of 19.
 
 ## Lesson URL scheme
