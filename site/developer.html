@@ -28,6 +28,18 @@ window.addEventListener('DOMContentLoaded',function(){var b=document.querySelect
     <h1>Read-only access for AI agents</h1>
     <p class="lesson-motto">The course is a resource. The site is its access surface. No auth, no accounts, no write endpoints — just three ways for an agent to read it.</p>
 
+    <aside class="callout">
+      <p><strong>On the public host, only the static files exist.</strong> GitHub Pages serves
+      files and runs no code, so the REST API and the <code>Accept: text/markdown</code>
+      negotiation below are served by <code>scripts/serve-site.mjs</code> when you run the
+      site locally — not here. <code>openapi.json</code> and <code>server.json</code> describe
+      the contract; they are not live endpoints on this domain.</p>
+      <p>What <em>does</em> work here: every lesson URL, <a href="llms.txt">llms.txt</a>,
+      <a href="sitemap.xml">sitemap.xml</a>, <a href="catalog.html">the catalog</a>, and
+      <a href="glossary.html">the glossary</a>. The lesson markdown also lives in the repo at
+      <code>phases/NN-phase/NN-slug/docs/en.md</code>, which an agent can read with no API at all.</p>
+    </aside>
+
     <h2>1. llms.txt</h2>
     <p>The fastest way in. A plain-text index of every lesson, one URL per line. Point an agent at <a href="llms.txt">/llms.txt</a> and it can decide what to read.</p>
     <pre><code>GET /llms.txt</code></pre>
