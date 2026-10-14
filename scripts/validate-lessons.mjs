@@ -37,6 +37,19 @@ const REQUIRED_SECTIONS = [
 // A pass criterion is a line starting with ✅ and containing "You pass when".
 const CRITERION = /^\s*(?:[-*]\s*)?✅/gm;
 
+// Scaffold markers. A skeleton satisfies every structural rule above — it has
+// all ten sections, one reframe, two criteria — so the checks below passed all
+// 119 lessons while 118 were empty. Structure is not authorship. These strings
+// appear in a template and in nothing an author would write.
+const SKELETON = [
+  [/^\s*>\s*Skeleton\./m, 'unwritten scaffold'],
+  [/Replace this placeholder/, 'unwritten scaffold'],
+  [/You pass when <observable state>/, 'unwritten scaffold'],
+  [/^\s*\| — \| — \|/m, 'empty table row'],
+];
+
+const QUIZ_PLACEHOLDER = [/^Replace with a question/, /^Replace me$/];
+
 function walk(dir) {
   const out = [];
   for (const entry of readdirSync(dir)) {
@@ -100,6 +113,11 @@ for (const { phase, lesson, dir } of lessons) {
     problems.push(`${label}: contains an unfilled authoring placeholder`);
   }
 
+  // Structure is not authorship — reject an unwritten scaffold.
+  for (const [re, why] of SKELETON) {
+    if (re.test(md)) problems.push(`${label}: ${why}`);
+  }
+
   // Grounding: ungrounded forward references.
   const key = `${phase}/${lesson.split('-')[0]}`;
   const rule = GROUNDING.find((g) => `${g.phase}/${g.lesson.split('-')[0]}` === key);
@@ -125,9 +143,38 @@ for (const { phase, lesson, dir } of lessons) {
           problems.push(`${label}: quiz ${q.id} answer ${JSON.stringify(q.answer)} out of range for ${q.options.length} options`);
         }
         if (!q.explanation) problems.push(`${label}: quiz ${q.id} has no explanation`);
+        // A valid-shaped quiz full of placeholders is still unwritten.
+        if (QUIZ_PLACEHOLDER.some((re) => (q.options ?? []).some((o) => re.test(o)))
+            || QUIZ_PLACEHOLDER[0].test(q.prompt ?? '')) {
+          problems.push(`${label}: quiz ${q.id} is an unwritten scaffold`);
+        }
       }
     } catch (err) {
       problems.push(`${label}: quiz.json is not valid JSON — ${err.message}`);
+    }
+  }
+}
+
+// Practice modules carry the same scaffold the lessons did, and nothing above
+// was looking at them. A BRIEF still reading "Fill this in" is not a brief.
+const PRACTICE_DIR = join(ROOT, 'practice');
+const BRIEF_SKELETON = [/Fill this in/, /\[your artifact \+ evidence\]/];
+
+if (existsSync(PRACTICE_DIR)) {
+  for (const mod of readdirSync(PRACTICE_DIR)) {
+    const dir = join(PRACTICE_DIR, mod);
+    if (mod === 'TEMPLATE' || !statSync(dir).isDirectory()) continue;
+    for (const file of ['BRIEF.md', 'RUBRIC.md']) {
+      const p = join(dir, file);
+      if (!existsSync(p)) {
+        problems.push(`practice/${mod}: missing ${file}`);
+        continue;
+      }
+      const text = readFileSync(p, 'utf8');
+      const hits = file === 'BRIEF.md'
+        ? BRIEF_SKELETON.filter((re) => re.test(text))
+        : [/\|\s*2\s*\|\s*Fill in\s*\|/].filter((re) => re.test(text));
+      if (hits.length) problems.push(`practice/${mod}/${file}: unwritten scaffold`);
     }
   }
 }
