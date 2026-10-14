@@ -7,21 +7,78 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Dev Environment that needs a new situation, not recall.",
+      "prompt": "Which file has the HIGHEST settings precedence?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "~/.claude/settings.json",
+        ".claude/settings.json",
+        ".claude/settings.local.json",
+        "managed-settings.json",
+        "claude --settings"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 3,
+      "distractors": [0, 1, 2, 4],
+      "explanation": "Precedence runs managed > --settings > project local > project shared > user. Managed is highest because your organization can enforce settings you cannot override locally.",
+      "concept": "settings-precedence"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You changed ~/.claude/settings.json but nothing happened. What do you run first?",
+      "options": [
+        "git status",
+        "/status, read Setting sources",
+        "npm install",
+        "claude mcp list"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "/status names which file supplied each value. Nine times in ten the problem is that you edited a layer that lost. Editing the winning layer is faster than guessing.",
+      "concept": "settings-precedence"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "What is the recommended maximum length for CLAUDE.md?",
+      "options": [
+        "500 lines",
+        "Unlimited if useful",
+        "200 lines",
+        "50 lines"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "Past 200 lines it stops being instructions and becomes reference material. Move the bulk to a skill and leave a pointer.",
+      "concept": "claude-md"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "Two settings files set the same key. What happens?",
+      "options": [
+        "The lower file wins",
+        "The higher-precedence one wins",
+        "Claude Code merges both into a new file",
+        "Claude Code prompts you to pick"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The highest-precedence layer that sets the key wins. The subtlety is arrays merge across layers while single values are replaced — see Step 3.",
+      "concept": "settings-precedence"
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "prompt": "What is the reframe this lesson asks you to adopt?",
+      "options": [
+        "The shell is where engineers live",
+        "You are choosing which directory an agent may act inside",
+        "Configuration prevents most agent mistakes",
+        "Environments should be reproducible"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Every boundary — permissions, isolation, safety — inherits the working directory you launched in. The directory choice is the first and largest one.",
+      "concept": "working-directory"
     }
   ]
 }
