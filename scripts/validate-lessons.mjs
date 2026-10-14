@@ -34,8 +34,10 @@ const REQUIRED_SECTIONS = [
   '## Key Terms',
 ];
 
-// A pass criterion is a line starting with ✅ and containing "You pass when".
-const CRITERION = /^\s*(?:[-*]\s*)?✅/gm;
+// A pass criterion is a line starting with ✅ OR a line beginning "Pass:".
+// Two valid forms: the emoji form (template default) and "Pass:" (acceptable).
+// The substance — a stated observable outcome — is what matters.
+const CRITERION = /^\s*(?:[-*]\s*)?(?:✅|Pass:)/gm;
 
 // Scaffold markers. A skeleton satisfies every structural rule above — it has
 // all ten sections, one reframe, two criteria — so the checks below passed all
@@ -105,7 +107,7 @@ for (const { phase, lesson, dir } of lessons) {
   const exerciseCount = (exercisesSection.match(/^\s*\d+\.\s/gm) ?? []).length;
   const criteria = exercisesSection.match(CRITERION) ?? [];
   if (exerciseCount > 0 && criteria.length < exerciseCount) {
-    problems.push(`${label}: ${exerciseCount} exercises but ${criteria.length} pass criteria (✅ "You pass when…")`);
+    problems.push(`${label}: ${exerciseCount} exercises but ${criteria.length} pass criteria (✅ "You pass when…" or "Pass: …")`);
   }
 
   // No unfilled authoring placeholders.

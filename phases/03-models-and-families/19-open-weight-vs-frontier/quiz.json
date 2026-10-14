@@ -7,21 +7,62 @@
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Open-Weight vs Frontier that needs a new situation, not recall.",
+      "prompt": "A colleague says an open-weight model is 'the same as open source.' What's the most accurate reply?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "Agreed — both mean the model is free to use",
+        "Open-weight means the model file is downloadable; training data and code are not necessarily public",
+        "Open-weight means the training data is public but the weights are encrypted",
+        "They are the same except open-weight is the marketing term"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Open-weight only requires the weights to be public. Training data, training code, and the recipe used to build the model may all stay private. Conflating the two is a common mistake.",
+      "concept": "open-weight"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You need to summarise a confidential internal report. The report cannot leave the building. Which kind of model do you use?",
+      "options": [
+        "Frontier, because it gives the best answers",
+        "Open-weight, because the prompt stays on your machine",
+        "Whichever is cheaper per call",
+        "Whichever is faster"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A frontier model sends the prompt to a remote datacenter. The constraint 'cannot leave the building' rules that out. An open-weight model running locally is the only option that satisfies the constraint.",
+      "concept": "privacy"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Which of these is the actual defining difference between open-weight and frontier models?",
+      "options": [
+        "Size — open-weight is always smaller",
+        "Quality — frontier is always better",
+        "Whether the weights are public",
+        "Whether the model is open source"
+      ],
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "The reframe: the difference is whether the weights are public. Size and quality are correlated but not definitional. A large, high-quality open-weight model is still open-weight; a smaller, hosted model is still frontier.",
+      "concept": "weights"
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "You want to fine-tune a model on your own support tickets. Which kind of model do you need?",
+      "options": [
+        "Frontier, because it has the most parameters",
+        "Open-weight, because fine-tuning needs access to the weights",
+        "Either — fine-tuning is API-based for both",
+        "Whichever the host recommends"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Fine-tuning means continuing training on your own data. That requires editable weights. Frontier models ship weights you cannot download, so you cannot fine-tune them. Only open-weight models allow it.",
+      "concept": "fine-tuning"
     }
   ]
 }

@@ -1,7 +1,6 @@
 # Open-Weight vs Frontier
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> After this lesson you choose which model to use on purpose, knowing what each choice costs in money, privacy, and offline access.
 
 **Type:** Learn
 **Prerequisites:** Lesson 18, Remotes, Forks, and the Full Mental Model
@@ -11,51 +10,109 @@
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+By the end of this lesson, you can:
+
+- Define open-weight and frontier models in one sentence each
+- Install a small open-weight model on your machine and run it
+- Compare an open-weight model's answer to a frontier model's answer to the same prompt
+- Pick open-weight or frontier for a given scenario based on cost, privacy, and offline needs
+- Explain why "open weight" is not the same as "open source"
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+The default the chat app hands you is a frontier model. You never made that choice, and it is the most consequential choice you will make all session.
+
+It is consequential in three ways at once: every call costs money, every call sends your prompt to a datacenter, and every call needs a network. The first one shows up in your bill. The second one shows up in your privacy review. The third one shows up the moment you try to work on a plane.
+
+An open-weight model is a different shape of the same job. A file you can download. Runs on your hardware. No bill per call, no prompt leaving your machine, no network needed after the initial download. Different shape, different cost, different trade-offs.
+
+Most people never make this choice consciously. They take what the app defaults to. After this lesson, you will pick on purpose, and you will know which scenarios push you to which side.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+Two kinds of model. Same job. Different shape.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+| | Open-weight | Frontier |
+|---|---|---|
+| Weights | Public. A file you can download | Secret. You cannot download them |
+| Where it runs | Your machine (or your server) | Someone else's datacenter |
+| Cost per call | Electricity, hardware wear | Per call, billed by the host |
+| Network needed | No (after download) | Yes, every call |
+| Privacy | Your prompt stays local | Your prompt leaves your machine |
+| Fine-tuning | Possible, you own the weights | Usually not |
+| Typical size | Small to medium | Often very large |
+
+The size column is not the point. Some open-weight models are huge. Some frontier models are modest. Size is a description, not the definition.
+
+**The reframe:** the difference between open-weight and frontier is whether the weights are public, not how big the model is.
+
+```mermaid
+flowchart LR
+  A[You] -->|download weights once| B[Open-weight<br/>runs on your laptop]
+  A -->|pay per call| C[Frontier<br/>runs in a datacenter]
+  B --> D[Cost: electricity<br/>Privacy: local<br/>Offline: yes]
+  C --> E[Cost: per call<br/>Privacy: leaves machine<br/>Offline: no]
+```
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+You will install one small open-weight model, ask it a question, then ask the same question of a frontier API, and compare.
 
-1. First step.
-2. Second step.
+1. Install a runtime that runs models locally. One option is `llama.cpp` from `github.com/ggerganov/llama.cpp`. Another is `ollama` from `ollama.com`. Pick one and follow its install steps.
+
+2. Pull a small chat model. Example (may need updating):
+
+   ```
+   ollama run qwen2.5:3b
+   ```
+
+   A small open-weight chat model such as Qwen-2.5-3B-Instruct (about 2 GB, fits on most laptops). If that exact tag has changed, the runtime's model library will show the current small option.
+
+3. Ask it a question. Try:
+
+   ```
+   Explain in two sentences why a hash table lookup is O(1) on average.
+   ```
+
+   Note the answer and how long it took.
+
+4. In a separate terminal, send the same prompt to a frontier API you have access to. Note the answer and the latency.
+
+5. Compare. Write down, in one sentence per model: what it got right, what it got wrong, how long each took, and what each call cost.
+
+Pass: you have one sentence per model, the open-weight model ran on your machine with no network after the initial download, and you can state which you would reach for next time and why.
 
 ---
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Scenario | Reach for |
 |---|---|
-| — | — |
+| Summarizing a private internal document | Open-weight. The document never leaves your machine |
+| Quick code question while on a plane | Open-weight. No network needed after download |
+| Cutting-edge reasoning task where quality matters most | Frontier. Bigger models, more compute, hosted on big iron |
+| High-volume bulk classification (thousands of calls) | Open-weight. Per-call cost is electricity, not API dollars |
+| Task you want to fine-tune for your domain | Open-weight. You can edit the weights |
+| One-off complex task with a small budget | Frontier. Pay only for what you use |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. **Define it.** Without looking back, write one sentence each for "open-weight model" and "frontier model." Then check against the table in this lesson.
+   Pass: both sentences mention whether the weights are public and where the model runs.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. **Run the comparison.** Pick a prompt you actually care about — a refactor plan, a tricky regex, a domain question. Send it to a small open-weight model running on your machine and to a frontier API. Score each on correctness, latency, and cost.
+   Pass: a one-paragraph written comparison, and a stated pick for that exact prompt.
+
+3. **Pick for a new scenario.** A hospital wants an assistant that reads patient notes and suggests follow-up questions for the doctor. Patient notes cannot leave the building. The hospital has a small GPU server.
+   Pass: you name open-weight, give two reasons from this lesson, and name one tradeoff the hospital will have to accept (slower responses, smaller model capacity, hardware cost — your choice).
 
 ---
 
@@ -63,10 +120,14 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| Open-weight | "Open source AI" | The weights are a downloadable file. The training data and code may not be public. "Open weight" and "open source" are not synonyms. |
+| Frontier | "The biggest model" | The model with the best capabilities at a given time, typically large and run by a major lab. Size correlates, but the defining trait is capability leadership, not parameter count. |
+| Weights | "The brain of the model" | The millions or billions of numeric parameters learned during training. Public weights mean anyone can run the model. |
+| Fine-tune | "Train the model again" | Continue training a downloaded model on your own data so it behaves the way you want. Only possible with open-weight models. |
+| Quantized | "Compressed model" | The weights stored at lower precision (e.g. 4-bit instead of 16-bit) so the model fits in less memory. Slight quality loss for a big size drop. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+Training, fine-tuning, distillation, and quantization. These are the levers that make open-weight models useful in practice — a 3B-parameter model fine-tuned on your support tickets will often beat a generic frontier model on your specific task. They are also where the real complexity lives: data pipelines, eval sets, GPU memory, and the discipline of not teaching your model to lie. Those come in later lessons. For now, the question is just: can you download it, or can you only call it?
