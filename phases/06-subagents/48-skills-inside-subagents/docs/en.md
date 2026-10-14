@@ -73,7 +73,7 @@ To actually block skill invocation, remove `Skill` from `tools`, or add it to
 Limits and rules:
 - Up to **32 distinct names** are preloaded; the rest are ignored.
 - Skills with `disable-model-invocation: true` **cannot** be preloaded — preloading
-  draws from the set Claude can invoke. That includes bundled `/verify`.
+  draws from the set of skills Claude is allowed to invoke.
 - A missing or disabled skill is skipped with a warning in the debug log. Not an
   error.
 - Built-in agents don't preload skills at all.
@@ -152,6 +152,9 @@ waiting next to them.
   arrives when it finishes. Set `background: false` to wait.
 - A backgrounded fork also runs with the **narrower background-subagent tool
   set**. If your skill's steps need a tool outside that set, `background: false`.
+  Note the asymmetry with Lesson 47: a `/subtask` **conversation** fork is
+  exempt from that filter and keeps your full tool pool. A `context: fork` skill
+  is an ordinary subagent, so the exemption does not cover it.
 - A backgrounded fork's edits fall **outside session checkpoints**. `/rewind`
   won't undo them. Use git.
 - Claude Code waits anyway in non-interactive mode (`-p`, the Agent SDK), when
