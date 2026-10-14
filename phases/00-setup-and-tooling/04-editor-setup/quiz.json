@@ -2,52 +2,52 @@
   "lesson": "00-setup-and-tooling/04-editor-setup",
   "title": "Editor Setup",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "An agent rewrites a function while you have that file open in your editor. You read it, approve it, and add your own change to the same function. Later you cannot find the agent's change. What happened?",
+      "prompt": "An agent rewrote a function and renamed it in the file, but three other files still call the old name and now fail to build. Which tool is designed for exactly this?",
       "options": [
-        "The agent's write failed because the file was locked",
-        "Your buffer was stale, and saving it overwrote the agent's on-disk version",
-        "Git rejected the change as a conflict",
-        "The editor auto-saved the agent's version over yours first"
+        "`git diff` followed by manual edits in each file",
+        "Rename-everywhere (F2 in VS Code), which updates every reference structurally",
+        "A global find-and-replace across the project",
+        "`git stash pop` to undo the rename"
       ],
       "answer": 1,
       "distractors": [0, 2, 3],
-      "explanation": "Your buffer was a copy from before the agent wrote. Saving pushes your copy to disk, and the agent's version — which was never committed — is destroyed. Git cannot help: it only knows about committed states. This is why auto-reload and diff-on-external-change are not optional when working with an agent.",
-      "concept": "buffer-over-disk"
+      "explanation": "Rename-everywhere understands scope — it changes the declaration and each reference, and it won't touch a same-named string or a different symbol. Find-and-replace changes text, so it will happily corrupt something that merely looks identical.",
+      "concept": "rename-everywhere"
     },
     {
       "id": "q2",
       "type": "multiple-choice",
-      "prompt": "A repo has `.editorconfig` specifying 4-space indentation. Your personal editor setting says 2 spaces. What happens when you open a file and save it?",
+      "prompt": "An agent's change touches 14 files and you can't tell if 3 of them are wrong. What is the fastest honest way to judge it?",
       "options": [
-        "Your personal setting wins, because editor settings override everything",
-        "It depends which file extension it is",
-        "A warning appears and the save is blocked",
-        "The project's `.editorconfig` wins for files it covers"
+        "Open all 14 files and read them in the editor",
+        "`git diff --stat` first to see the shape, then `git diff` per suspicious file",
+        "`git stash push` it and ask the agent to redo it",
+        "`git log --oneline` to see whether it committed anything"
       ],
-      "answer": 3,
-      "distractors": [0, 1, 2],
-      "explanation": "`.editorconfig` is a shared, checked-in contract that most editors honour over personal defaults for the patterns it covers. Personal settings are your fallback when no project rule exists. This is why you check for it before configuring anything personal.",
-      "concept": "editorconfig-precedence"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "`--stat` shows how many lines moved per file in one screen — that tells you where the risk is before you read a single line of content. Then narrow to the files that look wrong. Option A works but scales badly; option D answers a question you didn't ask.",
+      "concept": "review-a-big-change"
     },
     {
       "id": "q3",
       "type": "multiple-choice",
-      "prompt": "Why is format-on-save specifically valuable when reviewing agent-generated code?",
+      "prompt": "Why does this lesson teach `git stash push` instead of `git checkout -- file` for rejecting an agent's bad edit?",
       "options": [
-        "It makes the agent's code more correct",
-        "It makes the code faster to execute",
-        "It normalizes whitespace before the diff is created, so the diff shows logic changes rather than formatting noise",
-        "It prevents the editor's buffer from going stale"
+        "`checkout` deletes the change permanently; the stash keeps it recoverable so you can still read what the agent tried",
+        "`stash` is faster on large files",
+        "`checkout` cannot restore a single file in a repo with commits",
+        "`stash` also commits the change to the branch"
       ],
-      "answer": 2,
-      "distractors": [0, 1, 3],
-      "explanation": "It changes nothing about correctness, performance, or staleness. Its whole value is review quality: whitespace noise hides real changes in a diff, and a reviewer's attention is the scarce resource. An agent that reformatted forty files would otherwise produce a diff that is unreadable.",
-      "concept": "diff-signal"
+      "answer": 0,
+      "distractors": [1, 2, 3],
+      "explanation": "`git checkout -- file` throws the working-tree version away — including the good half of an edit you might want. The stash is a commit off-branch: your file returns to its committed state and nothing is lost. You can read it with `git stash show -p stash@{0}` and bring it back with `git stash pop`.",
+      "concept": "reject-without-losing"
     }
   ]
 }

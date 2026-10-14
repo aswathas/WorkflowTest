@@ -78,6 +78,10 @@ If you need "run this in that directory," wrap it:
 (cd src && npm test)      # subshell — cd applies inside, discarded after
 ```
 
+> **The reframe:** the shell is not a place you type commands, it is a small
+> program whose only interesting part is what happens *between* the words — so
+> read a pipeline left to right, and trust the exit code over the prose.
+
 ---
 
 ## Build It

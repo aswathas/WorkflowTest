@@ -2,26 +2,52 @@
   "lesson": "00-setup-and-tooling/05-debugging-and-profiling",
   "title": "Debugging & Profiling",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Debugging & Profiling that needs a new situation, not recall.",
+      "prompt": "After four agents edit four files in parallel, the suite is red. You have never seen it green. What should you check first?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "Revert all four agents' work — four simultaneous edits is always wrong",
+        "Whether the test runner is itself correct: path globs, working directory, config, and whether tests actually ran",
+        "Which agent has the most commits and start from there",
+        "Run the suite with more verbose output"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A red suite caused by a wrong glob looks exactly like failing code — this repo lost an afternoon to precisely that. Before concluding anything about the agents' work, confirm the runner matches real test files and actually ran tests. Verbose output is a good second step, not the first.",
+      "concept": "runner-vs-code"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "An agent \"fixed\" a failing test. The error message text changed completely, but the test still fails. What has most likely happened?",
+      "options": [
+        "The fix was correct; the message just got clearer",
+        "The failure was moved, not fixed — the fix needs to be proven with the identical command run before and after",
+        "The test cache is stale and needs clearing",
+        "The agent changed the test itself, which always counts as fixing"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A real fix changes observable behaviour, so the identical command produces a different result. Only the wording changing is the classic signature of a failure relocated rather than removed — and it will resurface somewhere less convenient.",
+      "concept": "prove-the-fix"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "You must hand an agent a failing build. Which message gets the closest fix on the first attempt?",
+      "options": [
+        "\"The build is broken on the API layer, please fix it\"",
+        "\"Run `npm run build`. It exits 1. Verbatim output: [30 lines]. The error mentions undefined `parseHeaders` in `src/api/client.ts:88`\"",
+        "\"Everything worked yesterday. It doesn't work now.\"",
+        "\"Fix the bug in the API code\""
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "An agent can only debug from evidence, and evidence is the command plus its verbatim output — which already names the file, the line and the symbol. The other three are descriptions of your feeling about the problem; the agent must reverse-engineer the facts from them, and each round trip costs a full cycle.",
+      "concept": "evidence-not-description"
     }
   ]
 }

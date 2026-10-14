@@ -1,7 +1,7 @@
 # Editor Setup
 
-> After this lesson, your editor is configured so an agent's edit and your read
-> happen in the same place, with no manual refresh.
+> After this lesson an agent can point at a file and a line, and you land there
+> without searching.
 
 **Type:** Build
 **Prerequisites:** Lesson 1, Dev Environment
@@ -11,136 +11,181 @@
 
 ## Learning Objectives
 
-- Open your project from your editor so the file tree, the terminal and the agent
-  all point at the same folder
-- Turn on a diff view so you can see exactly what an agent changed
-- Set up save-on-focus-change so you never lose an edit to a stale buffer
-- Configure line-length and format-on-save so generated code matches your style
+- Jump straight to a file and line from a command, the way an agent will ask
+- Find every reference to a name in one keystroke
+- See, in one glance, the lines you are about to hand to an agent
+- Reject an agent's edit while keeping it recoverable
 
 ---
 
 ## The Problem
 
-You are reviewing an agent's edit across four files. Your editor shows the old
-content. You scroll, refresh, close the tab, reopen it. Sometimes it updates.
-Sometimes it doesn't, and now you cannot tell whether you are looking at stale
-content or at the actual current file.
+An agent says: "the bug is at `src/parse.ts:142`." You open your editor, type
+`parse`, wait for the file finder, scroll, look for line 142, check whether that
+is the line. Forty seconds of ceremony, every time, for a fact you were already
+told.
 
-Then you make a small edit yourself without noticing the agent also just changed
-that region, and you save. Your buffer wins. The agent's change is gone. It is not
-in history — it was never committed. Lesson 2's safety net does not cover this,
-because git only sees what reached disk.
-
-The expensive part is not the lost edit. It is that you cannot tell a stale file
-from a real one, so you stop trusting your own screen. That is the whole problem.
+The cost is not the forty seconds. It is that the ceremony is where you stop
+paying attention. Better: make the jump free, so reading what the agent actually
+changed takes real thought.
 
 ---
 
 ## The Concept
 
-An editor is a *view of files on disk*. Everything an agent does goes to disk.
-Your buffer is a copy of that file held in memory, and the two drift apart the
-moment either side writes.
+Three capabilities, in the order you feel them.
 
-```mermaid
-sequenceDiagram
-    participant A as Agent
-    participant D as Disk
-    participant E as Your editor buffer
-    A->>D: writes the file
-    Note over E: still holds the OLD copy<br/>until it notices
+### 1. Address a location directly
+
+```bash
+code src/parse.ts:142
 ```
 
-Three settings close that gap, and they are the entire lesson.
+Any terminal-to-editor setup that accepts `file:line` turns a sentence from an
+agent into a cursor position. Worth setting up in whichever editor you actually
+use — the `code` command here, `vim src/parse.ts +142`, `idea --line 142`.
 
-**1. Auto-reload on external change.** The editor notices the file changed
-underneath it and reloads. Most editors default this on; several do not.
+### 2. Go to a definition, or every use, in one keystroke
 
-**2. A diff view for external changes.** Rather than silently swapping content,
-show a side-by-side diff and let you accept or reject. This is the single highest
-value setting in this lesson.
+| Key | VS Code | What it does |
+|---|---|---|
+| F12 | `Cmd/Ctrl+click` on a name | Jump to definition |
+| Shift+F12 | `Alt+click` | All references |
+| `Ctrl-Shift-F` | — | Search across files |
+| F2 | `F2` on a name | Rename everywhere, safely |
 
-**3. Format on save.** Agents write in their own style. Formatting on save means
-the diff you review is about the *logic*, not about whether the agent used two
-spaces or four.
+Rename-everywhere is the one people under-use. When an agent renames a symbol in
+three places and misses one, `F2` fixes it in one operation.
 
-> **The reframe:** your editor and your agent are both writing to the same file,
-> and the editor is the one that is usually wrong — it is holding a copy from
-> before.
+### 3. Stage a diff before you approve it
+
+The habit that prevents disaster: never accept a large agent change by eye.
+
+```bash
+git diff                    # the whole change, in your terminal
+git diff --stat             # how much changed, per file
+git diff src/parse.ts       # just one file
+```
+
+`git diff` is the review surface. It shows exactly what will land, and it works
+even if your editor is a text file you don't trust.
+
+> **The reframe:** the editor is not where you write the change — it is where you
+> *verify* it, and a review you do without reading the diff is not a review.
 
 ---
 
 ## Build It
 
-The exact keybindings differ per editor; the *settings* do not. Take VS Code as
-the concrete example, translate to yours.
+### 1. Make `code` accept file:line
 
-1. **Open the project root, not a subfolder.** In your editor: File → Open Folder
-   → the folder containing `.git`.
-   ✅ You see the same top-level entries your terminal's `ls` shows.
+```bash
+# add to your shell profile, then reload
+alias c='code'
+```
 
-2. **Enable auto-reload.** Search settings for `files.autoReload` and set it to
-   `onFocusChange` (VS Code) or the nearest equivalent.
-   ✅ You edit a file from the terminal with `echo x >> notes.txt`, switch back to
-   the editor, and the change is already visible.
+Test it on a real file with a real line number.
 
-3. **Turn on the diff view.** Search for `diffOnChange` / "auto compare" and enable
-   it.
-   ✅ Change a file from the terminal, switch to the editor, and you see a diff
-   with accept/reject rather than the file silently changing.
+✅ You pass when the cursor lands on the line number you gave.
 
-4. **Format on save.** Search for `editor.formatOnSave`, enable it, and set a line
-   length of 80 or whatever your project already uses.
-   ✅ Open a file with bad indentation, save it, and the indentation normalizes.
+### 2. Set up the file you jump to most
 
-5. **Check the project's own config first.** Look for `.editorconfig`,
-   `pyproject.toml`, or a `format` section in `package.json`.
-   ✅ Either you find one — and you follow it, because it outranks your personal
-   preferences — or you confirm there isn't one and set your defaults.
+Before an agent session, open the two or three files that task will touch.
 
-That last step is the one people skip. Personal settings in a repo with a shared
-config produce diffs nobody asked for.
+```bash
+code src/index.ts src/parse.ts
+```
+
+✅ You pass when both files open in tabs without touching the mouse.
+
+### 3. Review the way you will actually be asked to
+
+Make a change on a scratch branch, then read it three ways:
+
+```bash
+git diff --stat              # shape: how much, where
+git diff                     # content: line by line
+code --diff src/index.ts     # side-by-side, coloured, in your editor
+```
+
+✅ You pass when you can state exactly which lines changed without scrolling
+through the file.
+
+### 4. Reject an edit without losing it
+
+The safety move. Never delete a bad agent change — park it.
+
+```bash
+git stash push -m "agent attempt: parse rewrite"
+git status                   # clean
+```
+
+Later, look at what you threw away:
+
+```bash
+git stash list
+git stash show -p stash@{0}
+```
+
+Bring it back if it turns out to be right:
+
+```bash
+git stash pop
+```
+
+✅ You pass when the file is restored to its committed state and the agent's
+attempt is still recoverable from the stash list.
+
+### 5. Find every place a name appears
+
+Open any code file, put the cursor on a function name, press Shift+F12.
+
+Then compare against what git thinks changed:
+
+```bash
+git diff --name-only
+```
+
+✅ You pass when you can say whether the agent's rename touched every reference
+or missed some.
 
 ---
 
 ## Use It
 
-| Setting / command | When you reach for it |
+| Command / concept | When you reach for it |
 |---|---|
-| Auto-reload on focus change | Always. Non-negotiable with an agent writing files. |
-| Diff on external change | Any time you review agent work. Non-negotiable for lessons 1–4. |
-| Format on save | Always. Keeps diffs about logic. |
-| `.editorconfig` | Check before setting anything personal. It wins. |
-| `git diff` | After every agent edit, regardless of editor. Your editor's diff is not history. |
-| Reload window | When you are genuinely unsure whether what you see is current. |
+| `code file:line` | Jumping to what an agent pointed at |
+| `git diff` | Reviewing any agent change before it lands |
+| `git diff --stat` | Gauging how big a change is in one line |
+| `git diff -- file` | Narrowing the review to one file |
+| `git stash push -m "..."` | Parking a change you don't want yet |
+| `git stash list` / `git stash show -p stash@{0}` | Looking at what you parked |
+| `git stash pop` | Bringing a parked change back |
+| Shift+F12 (find references) | Checking whether a rename was complete |
+| F2 (rename symbol) | Fixing a rename an agent got wrong |
+| `code --diff file` | The visual review surface |
 
 ---
 
 ## Exercises
 
-1. Catch yourself being wrong.
-   Open a file in the editor, then change the *same lines* from the terminal while
-   that buffer is open. Switch back.
-   ✅ You pass when you see the terminal's version and the editor shows you a
-   diff — not a silently replaced file. That is the failure mode this lesson
-   exists to prevent.
+1. Open a file at line 1, then at line 200, in two commands. No scrolling, no
+   file-picker.
+   ✅ You pass when you land on both lines exactly.
 
-2. Make the agent's output match your style automatically.
-   Ask an agent to write a file. Save it. Check whether indentation was normalized.
-   ✅ You pass when `git diff` shows no whitespace-only noise, because the editor
-   normalized it before it reached disk.
+2. Make a ten-line change to one file, then describe the change using only
+   `git diff --stat` and `git diff`. No opening the file.
+   ✅ You pass when your description names the file and every changed region.
 
-3. Establish precedence.
-   Create a `.editorconfig` in the scratch repo, then confirm your editor obeys it
-   over your personal setting.
-   ✅ You pass when the project's rule wins and you can say, in one sentence, why
-   it should.
+3. Have an agent (or a friend) make a change you dislike. Park it with `git
+   stash push`, verify the file is back to its committed state, then recover the
+   parked version with `git stash show -p` without applying it.
+   ✅ You pass when the file is clean *and* you can still read the discarded diff.
 
-4. Build your review habit.
-   Perform one agent edit and review it using only `git diff`, with the editor
-   closed.
-   ✅ You pass when the diff alone is enough to tell you what changed — no editor
-   required.
+4. Rename a function by hand in a file that has three call sites, then use
+   rename-everywhere to verify nothing was missed.
+   ✅ You pass when the project still builds and no stale references remain.
 
 ---
 
@@ -148,22 +193,20 @@ config produce diffs nobody asked for.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| Buffer | "the file" | Your editor's in-memory copy. It is not the file until you save. |
-| Auto-reload | "it updates" | The editor re-reads from disk when it regains focus, closing the staleness gap. |
-| Diff view | "seeing the change" | A side-by-side before/after you accept or reject, rather than a silent swap. |
-| Format on save | "it looks right" | Whitespace is normalized before reaching disk, so diffs carry logic only. |
-| Editor trust | "it's fine, I saved" | Trusting a buffer over disk. This is how an agent's edit gets silently overwritten. |
+| `file:line` | "a jump link" | A path plus a line number that editors turn into a cursor position. The agent's default way of pointing at code. |
+| diff | "the changes" | The line-by-line difference between two states. `git diff` compares working tree to the last commit. |
+| `git diff --stat` | "summary" | Files changed and lines added/removed, per file. No content. |
+| stash | "save for later", "undo" | A commit that is not on any branch. Parks work off your working tree without deleting it. |
+| find references | "global search" | Structural lookup of one symbol's uses, understanding scope. Search finds text; this finds code. |
 
 ---
 
 ## What this lesson skipped
 
-Specific editor choice, keybinding schemes, language-server configuration, and
-any editor's advanced features. The settings above are the intersection of what
-every editor has. If you already know your editor well, this lesson is thirty
-minutes of verification, not learning.
+No keybinding customisation, no themes, no extension recommendations, no
+multi-cursor editing tutorial, no language-server setup. Those are taste, and
+taste is not what this course teaches.
 
-Not covered, and it matters: what to put in a project instruction file so an
-agent follows your conventions without you restating them every session. That is
-Lesson 65, ten phases from here. For now, your editor's formatting is doing that
-work for you.
+Also skipped: LSP setup beyond what editors do automatically. If a later lesson
+needs language-server concepts it will ground them there — nothing above assumes
+them.
