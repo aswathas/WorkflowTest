@@ -41,7 +41,7 @@ reason about, break, and rebuild.
 
 ## Teaching it to yourself, with an agent
 
-This repo is designed to be pointed at an AI agent. Four skills, each invoked
+This repo is designed to be pointed at an AI agent. Five skills, each invoked
 deliberately by the learner:
 
 | Command | Does |
@@ -50,6 +50,7 @@ deliberately by the learner:
 | `/run-module` | Start or grade a practice module |
 | `/where-am-i` | What's demonstrated, what's next |
 | `/write-lesson` | Author a new lesson |
+| `/run-workflow` | Author the rest of the corpus, validate it, rebuild the site |
 
 Any agent works — Cursor, Codex, plain Claude Code. The skills are thin wrappers
 over conventions that live in files. Read [`AGENTS.md`](AGENTS.md) and you have

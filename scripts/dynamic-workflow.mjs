@@ -54,6 +54,14 @@ const node = (script, args = [], opts = {}) =>
 function status() {
   log('status: which phases still have gaps');
   // exit 0 = complete, 1 = gaps remain. Both are fine here; 1 just means work.
+  // The status report takes one phase per call, so honour --phases by looping.
+  if (PHASES) {
+    let complete = true;
+    for (const p of PHASES.split(',').map((s) => s.trim())) {
+      if (node('workflow-status.mjs', ['--phase', p]).status !== 0) complete = false;
+    }
+    return complete;
+  }
   return node('workflow-status.mjs', []).status === 0;
 }
 
