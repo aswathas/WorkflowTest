@@ -1,0 +1,27 @@
+{
+  "lesson": "07-mcp/51-scopes-and-config",
+  "title": "Scopes, Precedence, Config Shape",
+  "version": 1,
+  "passingScore": 3,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "prompt": "Replace with a question about Scopes, Precedence, Config Shape that needs a new situation, not recall.",
+      "options": [
+        "Replace me",
+        "Replace me",
+        "Replace me",
+        "Replace me"
+      ],
+      "answer": 0,
+      "distractors": [
+        1,
+        2,
+        3
+      ],
+      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
+      "concept": "replace-me"
+    }
+  ]
+}

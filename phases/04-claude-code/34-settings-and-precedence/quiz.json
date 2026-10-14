@@ -1,0 +1,27 @@
+{
+  "lesson": "04-claude-code/34-settings-and-precedence",
+  "title": "Settings — 4 Files, 5 Precedence Levels",
+  "version": 1,
+  "passingScore": 3,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "prompt": "Replace with a question about Settings — 4 Files, 5 Precedence Levels that needs a new situation, not recall.",
+      "options": [
+        "Replace me",
+        "Replace me",
+        "Replace me",
+        "Replace me"
+      ],
+      "answer": 0,
+      "distractors": [
+        1,
+        2,
+        3
+      ],
+      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
+      "concept": "replace-me"
+    }
+  ]
+}
