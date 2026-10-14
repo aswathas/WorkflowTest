@@ -1,7 +1,7 @@
 # Latency, Cost, and Rate Limits
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can predict whether a session will be slow or expensive *before* you start
+> it, and tell a rate limit apart from a bug from a stuck process.
 
 **Type:** Learn
 **Prerequisites:** Lesson 10, What "Agentic" Means
@@ -11,33 +11,169 @@
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Predict whether a task will be expensive before starting it, from its shape
+- Read `/usage` and say what the three numbers mean, including cache reads
+- Explain why a repeated request can cost less the second time
+- Tell a rate limit, a slow command, and a cold cache apart from each other
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+An agent was left running on a broad task. Twenty minutes later it came back
+with a diff. It was wrong — it had searched the entire tree twice and edited
+files nobody asked about. Twenty minutes and real tokens, gone.
+
+Then a second run, narrower, came back in ninety seconds with the right answer.
+
+The difference was not the model. It was the number of requests: a broad task
+triggers dozens of tool round trips, and each one waits on the network. Latency
+and cost are the same quantity viewed twice — requests × tokens per request.
+
+Nobody had budgeted for either, because nothing on screen said what the task
+would cost before starting it. And when something did stall, the three possible
+causes looked identical from the outside: slow model, rate limit, or your own
+code hanging.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+Three separate things, often confused.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+**Latency** is how long a turn takes. It stacks: every tool round trip is a
+network wait, and the model's own generation time is on top. A turn with ten
+round trips is ten waits.
+
+**Cost** is tokens × price. Inputs and outputs are priced differently, and
+repeated context is the dominant input cost — that is Lessons 7 and 8, not a new
+idea here. What is new: cost is predictable from the shape of the task.
+
+**Rate limits** are the provider's ceiling. You hit one and requests are refused
+or queued, regardless of how much you would like them to succeed.
+
+```mermaid
+flowchart TD
+    T[One turn] --> N[How many round trips?]
+    N --> L[Latency: N × per-request time]
+    N --> C[Cost: N × (prompt + output) tokens]
+    C --> R{Cross the provider ceiling?}
+    R -->|Yes| E[Refused or queued: a rate limit]
+    R -->|No| D[Done]
+    L --> S{Same wall time every run?}
+    S -->|No| N
+    S -->|Yes| W[Something else is stuck: your process]
+```
+
+### Cost is a function of task shape, not task size
+
+| Task shape | Round trips | Relative cost |
+|---|---|---|
+| One question about a file you name | 1–2 | Low |
+| Search a directory, report paths | 3–6 | Medium |
+| Search a whole monorepo, read candidates, verify | 15+ | High |
+| Any task repeated across many sessions | N × sessions | Compounding |
+
+The expensive one is not the task that does the most. It is the one that
+re-reads. Ten requests each carrying a full context costs ten contexts. This is
+why "let it figure it out" on a large repo is a budget decision.
+
+### Caching changes the arithmetic
+
+Repeated content does not cost full price each time. Claude Code uses prompt
+caching so that content it has already processed is served at a reduced rate,
+and the cache expires on a TTL — an hour on a typical subscription, shorter in
+some configurations. When it expires, the next request pays full price again.
+
+You will see this in `/usage`: a session with a high proportion of cache reads is
+a session that is working efficiently. A run of misses usually means something
+large changed, or you came back after a break. Not a bug — but a signal.
+
+### Three stalls, three different fixes
+
+| What you see | What it is | What to do |
+|---|---|---|
+| Error naming a usage or rate limit | The provider refused | Wait, or reduce concurrency |
+| Slow, but the same every time | Likely your own command or test suite | Look at what the tool is running |
+| Slow on the first request of a session, fast after | Cold cache | Expected; it settles |
+| Fast on first try, then stalls | Output length or thinking budget | Narrow the ask |
+
+The fourth row is worth internalising: a *longer* answer can be the slow part,
+not the reasoning.
+
+> **The reframe:** latency and cost are the same bill seen twice — a function of
+> how many round trips your task shape forces — so the way to make a task cheap
+> is fewer round trips carrying less, not a faster model.
+
+Prices, TTLs, cache behaviour, and command output all move. Read
+[the costs page](https://code.claude.com/docs/en/costs) and
+[the commands reference](https://code.claude.com/docs/en/commands) for current
+values; `claude --version` for yours.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Read your own numbers
 
-1. First step.
-2. Second step.
+```
+/usage
+```
+
+Look at three things: total cost, how much of the input came from cache, and
+which model did the work. Write them down. Every later judgement in this lesson
+is relative to these three numbers.
+
+✅ You pass when you have all three numbers, not just the total.
+
+### 2. Predict before you run
+
+Write down, before running anything: how many round trips you expect for
+"explain how this repo validates lessons", and how many for "compare the branch
+logic in two named files".
+
+Then run both, with `/usage` between them, and check your predictions.
+
+✅ You pass when your predicted gap between the two matches the measured gap in
+direction and roughly in size.
+
+### 3. Demonstrate the repeat-cost
+
+Run one narrow request. Record the cost. Run it again in the same session. Record
+that cost too.
+
+The second should be cheaper, because the context is cached.
+
+✅ You pass when the second run cost measurably less, and you can say why in one
+sentence.
+
+### 4. Watch the cache go cold
+
+In one session run a request. Wait several minutes. Run the same request again.
+
+Compare the two. Somewhere in between, the cached prefix expired and the second
+request paid full price.
+
+✅ You pass when the second cost is higher than the first, and you can attribute
+the difference to the cache rather than to the task.
+
+### 5. Tell a rate limit from a bug
+
+In a session, note the exact text of any error mentioning usage or limits.
+Compare it with any error that was a real failure.
+
+They look nothing alike, once you have seen both.
+
+✅ You pass when you can quote a limit message and say what it asked you to do,
+without guessing.
+
+### 6. Find the expensive shape in a real session
+
+Look at `/usage` after a real task. Which shape dominates: many small requests,
+or few large ones? Say which, and what you would change about how you asked.
+
+✅ You pass when you can name the dominant shape and one concrete change to your
+asking that would reduce it.
 
 ---
 
@@ -45,17 +181,32 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Command / concept | When you reach for it |
 |---|---|
-| — | — |
+| `/usage` | Before blaming the bill; after anything expensive |
+| Cache read proportion | Judging whether a session was efficient |
+| Round trips per turn | Estimating cost and latency before starting |
+| `/context` | When `/usage` shows more spend than expected |
+| Naming the stall type | Any hang or refusal |
+| `/clear` | Switching tasks — stops paying for irrelevant history |
+| `/compact` | Same task, cheaper turns, history matters |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Run three tasks of deliberately different shapes in one session, recording
+   `/usage` between each. Sort them cheapest-first.
+   ✅ You pass when your ordering matches the measured costs, and you can name
+   the shape that produced the outlier.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Reproduce a cache miss. Get a warm-cache number and a cold-cache number for
+   the same request, and write down the gap.
+   ✅ You pass when you have both numbers and can explain the difference without
+   invoking anything you did not observe.
+
+3. Write down a budget for one real task — number of round trips, rough tokens —
+   before starting it. Run the task. Compare.
+   ✅ You pass when you have the prediction written down *before* the run, and
+   the comparison, and you can say which estimate was worse and why.
 
 ---
 
@@ -63,10 +214,32 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| latency | "the model is slow" | Wall time per turn: many network round trips plus generation. Usually round trips, not thinking. |
+| round trip | "a step" | One request to the model and back. Each one re-sends context. Cost and latency both scale with the count. |
+| rate limit | "quota" | The provider's ceiling. Requests are refused or queued; nothing you write changes it. |
+| prompt cache | "it remembered" | Previously-processed content served at a reduced rate. Expires on a TTL, then costs full price again. |
+| cache read | "free" | Reduced-rate reuse. High proportions mean efficient work; misses mean something invalidated. |
+| tokens per million | "the price" | Unit pricing for input and output. Changes — read it live, never from memory. |
+| `/usage` | "the bill" | Session cost, plan limits, and a usage breakdown. Estimated from token counts, not an invoice. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**Choosing a model to trade cost against capability.** The single biggest cost
+lever, and it is Phase 03. This lesson gives you the arithmetic; that phase gives
+you the decision.
+
+**Reducing spend structurally.** Hooks that filter large outputs, moving
+instructions out of always-loaded files, delegating large reads. All real, all
+dependent on concepts this phase has not established yet.
+
+**Batch and async APIs.** Lower cost per token, worse latency. Irrelevant to
+interactive work, and not on the path this course takes.
+
+**Concurrency and throttling.** How many agents can run at once before you hit
+limits. It arrives with parallelism in Phase 11, where you will have the
+arithmetic to reason about it.
+
+**Enterprise cost controls.** Spend limits, workspaces, org reporting. Only
+relevant if you are deploying for a team, which this course does not do.

@@ -2,26 +2,52 @@
   "lesson": "01-foundations-of-ai/11-latency-cost-and-rate-limits",
   "title": "Latency, Cost, and Rate Limits",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Latency, Cost, and Rate Limits that needs a new situation, not recall.",
+      "prompt": "The same request costs less when repeated in a warm session than the first time. What is the mechanism?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "The second request is shorter because the model remembers and compresses your earlier wording",
+        "Previously processed context is served from the prompt cache at a reduced rate, and the cache expires on a TTL",
+        "Subscriptions discount the second identical request as a loyalty repeat",
+        "The agent reuses the earlier tool results instead of re-running the tools"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The prompt cache is what makes a re-send cheaper: content already processed is reused at a reduced rate, until a TTL expires and the next request pays full price again. Option A describes a memory behaviour the model does not have — it re-sends the same bytes every time. Option D confuses the model-side cache with the tool layer; tool results are still re-sent either way.",
+      "concept": "prompt-cache"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You have a small change to make in a 200,000-token repo. Which ask is most likely to be both fast and cheap?",
+      "options": [
+        "Investigate the repo to understand how this area works before making the change",
+        "Change the named constant on the line named, then run the named test",
+        "Refactor the surrounding module so the change fits the existing conventions",
+        "Search for every usage of the constant across the repo, read each match's context, and update them consistently"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 1,
+      "distractors": [0, 1, 2, 3],
+      "explanation": "Cost and latency both scale with round trips, and each round trip re-sends the whole context. Naming the file and the test collapses the task to one or two round trips. Option A spends a full investigation on a change you could have described precisely. Option D is genuinely thorough, which is exactly why it is the most expensive — and for a single constant it is wasted effort.",
+      "concept": "round-trips"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "An agent call has been running four minutes with no output. You open the terminal and find nothing obviously stuck. What is the most useful next move?",
+      "options": [
+        "Restart the session — a stall this long always means a dead agent",
+        "Classify the stall: did it stop at a usage-limit message, at your own long-running command, or at the model's first token",
+        "Switch to a smaller model to get past the stall",
+        "Add more detail to the prompt so the model has more to work with"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "The three stalls have different signatures and different fixes, and only one is yours to fix — a limit message, your own hanging test suite, or a genuinely slow first token are distinguishable in the transcript. Option A destroys the work for a problem that may be a five-second wait. Option C changes capability, which is not what latency is. Option D adds context to a request that has not started responding, so it changes nothing.",
+      "concept": "classify-the-stall"
     }
   ]
 }

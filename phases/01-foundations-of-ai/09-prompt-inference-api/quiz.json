@@ -2,26 +2,52 @@
   "lesson": "01-foundations-of-ai/09-prompt-inference-api",
   "title": "Prompt, Inference, API",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about Prompt, Inference, API that needs a new situation, not recall.",
+      "prompt": "You asked one question. /usage shows a cost far larger than the question's length explains. What accounts for most of it?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "The question was re-tokenized once per candidate answer the model considered",
+        "One turn can drive several requests, and each re-sends the whole prompt — history, files, and tool definitions included",
+        "The API bills the request once for the prompt and again for the model's internal draft",
+        "The prompt cache was cold, so the entire input was charged at full price three times"
       ],
-      "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A single user turn is usually several round trips — read a file, run a command, check a result — and every one of those re-sends the full assembled prompt. That is why cost tracks context, not question length. Option C invents a double-billing model that does not exist. Option D is wrong because the cache reads at a reduced rate, and 'three times' is not what the re-send loop does.",
+      "concept": "many-requests-per-turn"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "The agent ignores a clear instruction you gave and follows a rule from the project's CLAUDE.md instead. Which is the accurate diagnosis?",
+      "options": [
+        "Your instruction lost to the system prompt, which always outranks everything",
+        "The context window dropped your message during compaction",
+        "Project files are injected into the context on every request and were present alongside your words",
+        "The model cannot see your instruction unless it is inside a code block"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "Your message and the project file arrived in the same context, so the agent reconciled them and went with the one that read as a standing project rule. Option A gets the mechanism backwards — your message is not competing against a system prompt, it is competing against a file the harness loaded. Option B needs a window fill, and this happened on a fresh session. Option D is not how input works.",
+      "concept": "prompt-is-whole-document"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "You are extracting issue titles into JSON and two runs of the identical request produce slightly different arrays. Which change is most likely to help?",
+      "options": [
+        "Add more examples of the output you want",
+        "Tighten the format instruction so only the array is produced, and lower the temperature if you control it",
+        "Ask the agent to check its work before answering",
+        "Clear the context before each run so the window is identical"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "Variation in a formatted extraction is sampling, so the fix is the one that removes sampling freedom: a tight output contract plus a lower temperature. Option A adds input without removing freedom. Option C asks for reasoning where the problem is the sampler, and verification cannot fix a non-deterministic draw. Option D is a real hygiene move but the window was already identical within a single turn — the run-to-run difference is the model, not the context.",
+      "concept": "temperature"
     }
   ]
 }

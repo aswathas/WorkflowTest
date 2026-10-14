@@ -2,26 +2,52 @@
   "lesson": "01-foundations-of-ai/10-what-agentic-means",
   "title": "What \"Agentic\" Means",
   "version": 1,
-  "passingScore": 3,
+  "passingScore": 2,
   "questions": [
     {
       "id": "q1",
       "type": "multiple-choice",
-      "prompt": "Replace with a question about What \"Agentic\" Means that needs a new situation, not recall.",
+      "prompt": "An agent fixed the function you asked about, ran the test suite, reported success — and the reported bug is still reproducible. Which link in the loop broke?",
       "options": [
-        "Replace me",
-        "Replace me",
-        "Replace me",
-        "Replace me"
+        "Verification — the checks it ran could not have detected the bug",
+        "Capability — the model is not strong enough to fix this class of bug",
+        "Surface — it needed a tool it did not have",
+        "Context — it never saw the file containing the bug"
       ],
       "answer": 0,
-      "distractors": [
-        1,
-        2,
-        3
+      "distractors": [1, 2, 3],
+      "explanation": "The agent read files, made an edit, and reported honestly — the loop ran correctly. What it could not do was detect the failure, so a green suite proved nothing. Option B and C are ruled out by the report itself: a capability gap would have shown as an admission, and a missing tool would have surfaced as flailing. Option D is possible but would usually produce a confident wrong answer about the code rather than a plausible edit plus a green run.",
+      "concept": "verification-failure"
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "You ask an agent to find every caller of a function in a path it cannot see. It returns a confident list anyway. What actually happened?",
+      "options": [
+        "The model retrieved the answer from training data about your project",
+        "The system prompt overrode your request and sent it to a different model",
+        "An empty tool result was treated as evidence of absence, so the model generated the callers",
+        "The context window dropped your request before the search ran"
       ],
-      "explanation": "Why the answer is right, and why the tempting wrong one is wrong.",
-      "concept": "replace-me"
+      "answer": 2,
+      "distractors": [0, 1, 3],
+      "explanation": "The search returned nothing, and nothing is not 'these do not exist' — it is 'I looked in the wrong place'. Treating it as absence let the model fall back on generation, which is exactly what Lesson 6 describes. Option A is the misconception this phase exists to kill: the model has no access to your repo except through tools. Option D would produce a missing-search symptom, not a confident answer.",
+      "concept": "empty-tool-result"
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "The agent is three steps into a search you know is heading the wrong way. You want to redirect it without losing the work already done. What do you do?",
+      "options": [
+        "Press Esc to stop it, then start the session over with better instructions",
+        "Type the correction and press Enter without stopping",
+        "Wait for it to finish, then correct it in the next message",
+        "Run /rewind to restore every file it has changed"
+      ],
+      "answer": 1,
+      "distractors": [0, 2, 3],
+      "explanation": "A typed correction is queued and picked up as soon as the current tool calls finish, so the redirect happens without discarding the work already done. Option A throws away the work to buy a cleaner start, which is almost never worth it mid-investigation. Option C works but costs the wasted steps. Option D is a file restore, not a conversation steering tool — it undoes edits, not a wrong search.",
+      "concept": "steering"
     }
   ]
 }

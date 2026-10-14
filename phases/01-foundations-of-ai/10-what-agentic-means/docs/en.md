@@ -1,61 +1,234 @@
 # What "Agentic" Means
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can tell whether a task belongs in the loop or outside it — and stop
+> mistaking a loop that ran wrong for a loop that ran correctly on bad
+> information.
 
 **Type:** Learn
 **Prerequisites:** Lesson 9, Prompt, Inference, API
-**Time:** ~30 minutes
+**Time:** ~35 minutes
 
 ---
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Describe the agentic loop as gather, act, verify — from memory, no diagram
+- Name which of the four links broke when an agent produced a wrong result
+- Spot a verification failure before it costs you, by asking what the check could detect
+- Interrupt and redirect a running loop without discarding work already done
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+You asked an agent to fix a bug. It read four files, edited two, ran the tests,
+and reported: fixed, tests pass. The tests passed. The bug was still there —
+the suite had never covered that path, and the agent's fix addressed the
+symptom the tests *did* exercise.
+
+Nothing went wrong in the loop. Every step was reasonable: right files, sensible
+edit, real verification, honest report. The loop was correct. Its input was
+wrong.
+
+That distinction is the whole of this lesson. People say "the agent messed up"
+and mean one of at least four different things — model capability, context
+contents, tool surface, verification target — and the fixes are incompatible.
+Pick the wrong one and you spend an afternoon editing prompts to fix a missing
+test.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+"Agentic" is not a compliment. It is a description of a loop.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+Without tools, the model produces text. With tools, it produces **a request for
+an action**, the action happens, the result comes back, and the model decides
+what to do next. That repeat is the agentic loop. Claude Code is the harness
+around it: the thing that holds the tools, manages the window, asks permission,
+and runs the loop.
+
+```mermaid
+flowchart LR
+    P[Your prompt] --> G[Gather context]
+    G --> A[Take action]
+    A --> V[Verify]
+    V -->|not done| G
+    V -->|done| R[Report]
+    A -. tool call .-> T[(Real machine)]
+    T -. real result .-> G
+```
+
+The phases blend — there is no clean boundary between them in practice — but the
+loop is the point. A question about a codebase may only gather context. A refactor
+cycles through all three many times. The model decides what each step needs,
+based on what the previous step taught it.
+
+### The four things "agentic" can fail at
+
+| Failure | What it looks like | Where the fix goes |
+|---|---|---|
+| **Capability** | The model can't reason its way to the answer | Better instructions, more context, or a different model |
+| **Context** | It lacked the file, the constraint, or the earlier decision | Read the file, write the rule down, point at the folder |
+| **Surface** | It had no tool that could do the thing | A different approach, or a new tool |
+| **Verification** | It ran something that couldn't detect the bug | Name a check that can actually fail |
+
+**Verification is the one that hides.** Capability failures are obvious — the
+agent says it can't. Context failures surface as a confident wrong answer about
+your code. Surface failures look like flailing. Verification failures look like
+*success*, which is why they cost the most.
+
+### The loop is driven by results
+
+Every tool result is new information. That's what makes iteration possible and
+also what makes it go wrong: a tool that returns something unhelpful, or nothing,
+leaves the model reasoning on the same wrong footing. `grep` returning nothing
+because of a wrong path looks identical to "this doesn't exist."
+
+Before blaming the model, ask: *what did the tool actually return?*
+
+### Where you sit in the loop
+
+You are not observing it. You are in it, at every turn:
+
+- **Steering** — interrupt with `Esc`, or type a correction and let it finish the
+  current step.
+- **Narrowing** — say which files, which command, which scope.
+- **Verifying** — give it a check that can fail. A test, a command, a file to
+  diff.
+- **Rewinding** — `Esc` twice restores files to an earlier state.
+
+The last one is a safety net that is separate from git and independent of it.
+Knowing it exists changes how much you let an agent roam.
+
+> **The reframe:** "agentic" is just the model-tool-result-model loop running
+> unattended — so when it goes wrong, name which of the four links broke before
+> you touch anything, because a correct loop on wrong inputs still produces a
+> confident wrong answer.
+
+Every tool named here is stable; the list is not. Check
+[the tools reference](https://code.claude.com/docs/en/tools-reference) for
+today's set.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Watch one full loop with the phases visible
 
-1. First step.
-2. Second step.
+```
+/clear
+```
+
+```
+Read src/index.ts and tell me what it exports. Do not edit anything.
+```
+
+That is gather-context only. Now extend it:
+
+```
+Now add a named export `version` returning the string "1.0.0", and run the
+existing tests to check nothing broke.
+```
+
+Gather, act, verify — in one turn.
+
+✅ You pass when you can name which phase each request was aimed at and the
+agent's behaviour matched.
+
+### 2. Break the loop on purpose — a tool that returns nothing
+
+```
+Find every call to `handlePayment()` in this repo.
+```
+
+Watch what happens. Either it says none exist, or it invents them. Note which.
+
+Then give it the same request with a hint about where to look. Compare.
+
+✅ You pass when you can point at the step where an empty tool result was
+treated as a fact rather than as a missing fact.
+
+### 3. Prove verification is not proof
+
+This is the exercise that saves afternoons. On purpose:
+
+```
+Change the return value of `sum()` from a+b to a+b+1. Run the tests and report
+the result.
+```
+
+The tests are weak. The agent will report failure, or — worse — success.
+
+Now look at what it actually checked, and ask it: *what would this test have
+caught if the change had been bigger?*
+
+✅ You pass when you can name something the existing tests would not catch and
+say which file holds the missing assertion.
+
+### 4. Give a check that can fail, and watch behaviour change
+
+Same edit, but with a target:
+
+```
+Change sum() to a+b+1. Write a test that sums three numbers and asserts the
+result, run it, and report whether it fails.
+```
+
+Different run. The agent now has a real signal.
+
+✅ You pass when the failure is reported without you having to interpret the
+output for it.
+
+### 5. Steer mid-flight
+
+Start a broad request, then before it finishes type a correction. Watch the next
+step change direction.
+
+Then try `Esc` — the running tool call is cancelled and the agent waits.
+
+✅ You pass when you have steered one run without restarting the session.
+
+### 6. Name the layer on three real failures
+
+Write down three things that went wrong in real sessions. For each, name the link
+that broke: capability, context, surface, or verification.
+
+✅ You pass when all three are named by link, and at least one of them turns out
+to be verification.
 
 ---
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Concept | When you reach for it |
 |---|---|
-| — | — |
+| Capability / context / surface / verification | Any "the agent got it wrong" — name the link first |
+| A check that can fail | Every time you accept a claimed fix |
+| What did the tool actually return | Before blaming the model for a wrong conclusion |
+| `Esc` to interrupt | The agent is heading somewhere you don't want |
+| Typed correction without stopping | Redirecting without losing the work done so far |
+| `Esc` twice to rewind | Files changed in a direction you want undone |
+| Naming the files and the scope | When a broad search is dragging |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Take a real task. Write the request so that it names a verification step
+   that could fail. Run it before and after. Record what the check was.
+   ✅ You pass when the check exists, ran, and you can say what result it would
+   have produced if the change were wrong.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Deliberately make a check unable to fail. Run a change that the check should
+   catch but does not. Record the false green.
+   ✅ You pass when you have the output that said "pass" and the reason it was
+   lying.
+
+3. Write down four failures you have seen and label each with the broken link.
+   Then fix one of them at its actual layer rather than by rewording the prompt.
+   ✅ You pass when the fix for one of them is *not* a prompt change, and you can
+   say why the prompt change would not have worked.
 
 ---
 
@@ -63,10 +236,34 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| agentic | "it's autonomous" / "it's smart" | A loop: model decides, tool executes, result returns, model decides again. No magic adjective. |
+| agentic loop | "the magic" | That repeat. Gather context, take action, verify, repeat until done. |
+| harness | "the CLI" | The layer around the model: tools, context management, permissions, the loop itself. |
+| tool | "the agent's hands" | A named action the model can request. Every tool result becomes the next input. |
+| tool result | "the output" | New information fed back in. An empty or wrong result corrupts every step after it. |
+| verification | "it checked" | Running something capable of detecting the problem. Most self-checks cannot. |
+| surface | "it should have known" | The set of tools available. Missing a tool looks exactly like missing capability. |
+| checkpoint / rewind | "undo" | Harness-level restore of file contents, separate from git. Does not cover actions against remote systems. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**Permissions in depth.** How approval modes and permission rules gate tool
+calls. Real, load-bearing, and its own phase later — the loop makes more sense
+once you have watched it be blocked.
+
+**Subagents and delegation.** One loop today. Isolated windows and delegation
+change the shape of the loop, and that is Phase 06.
+
+**Hooks and MCP** as additions to the tool surface. Both extend what the loop
+can touch, and both get their own phases.
+
+**Multi-agent orchestration.** The next two phases, after git.
+
+**Planning modes and task graphs.** When a loop should stop looping and
+decompose first. Phase 15.
+
+**Checkpointing internals** — what is snapshotted, what is not. Enough to trust
+the rewind and not enough to rely on it for anything outside your working
+folder.

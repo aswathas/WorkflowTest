@@ -1,7 +1,7 @@
 # Tokens — why text becomes currency
 
-> Skeleton. `/write-lesson` replaces this line with what is different after this
-> lesson that wasn't before.
+> You can look at a bill, a limit, or a "full" warning and read the actual
+> number instead of guessing at it.
 
 **Type:** Learn
 **Prerequisites:** Lesson 6, What a Language Model Is
@@ -11,51 +11,208 @@
 
 ## Learning Objectives
 
-- State one thing the reader can DO afterwards, not a thing they will understand
-- Replace this placeholder
+- Estimate how many tokens a piece of text costs, within a factor of two
+- Predict which of two versions of a prompt is more expensive before running it
+- Explain why a token count is not a character count
+- Find out how many tokens a session has used, from inside the session
 
 ---
 
 ## The Problem
 
-Consequence first. What breaks, what it costs, what happens if the reader lacks
-this. Two sentences from a real incident — not a hypothetical.
+Two sessions, same task, same repo, wildly different bills. One agent read six
+files and edited two. The other read six files, edited two, and re-read the same
+four files three times each because a search came back with too many candidates.
+
+Nothing was different in difficulty. Nothing was different in outcome. The
+second session just sent more text. And nobody in the loop could see that,
+because nothing on screen said "that file cost you 14,000 of your 200,000."
+
+Text feels weightless. You can scroll past a thousand lines without a sensation
+of expense. But the model does not read — it counts, and everything is priced in
+the same unit.
 
 ---
 
 ## The Concept
 
-The idea, named the way people actually name it. A mermaid diagram if it has flow
-or structure.
+The model cannot work with characters. It was trained on **tokens**: the
+sub-pieces of text produced by a tokenizer, a small trained program that splits
+input into units. Roughly, a token is about four characters of English or about
+three-quarters of an English word.
 
-> **The reframe:** the one sentence that makes it click. Replace this line.
+The important part is not the ratio. It is that a token can be *part of a word*:
+
+| Text | Tokens (roughly) | Why |
+|---|---|---|
+| ` ind | 1 | rare, so the tokenizer keeps it whole |
+| `indentation` | 2–3 | common prefix, split to save space |
+| ` authenticate` | 3–4 | leading space merges with the word |
+| `supercalifragilistic` | 6+ | rare enough to shatter |
+
+So token count is not characters, not words, and not anything you can eyeball
+from character length alone. It is a property of the tokenizer, and every model
+family has its own. That is why a token count from one model is not a valid
+prediction for another.
+
+```mermaid
+flowchart TD
+    A["You type: fix the auth bug"] --> B[Tokenizer splits into tokens]
+    B --> C["~6 tokens here"]
+    C --> D["Everything else already in the conversation"]
+    D --> E["Model reads ALL of it, every single turn"]
+    E --> F[New response]
+    F --> G[Response joins the conversation permanently]
+    G --> D
+```
+
+That loop is the whole economics. **Every turn re-sends the entire
+conversation.** Tokens are not spent once; they are spent again on every
+subsequent request. A long session does not cost more because it did more work
+— it costs more because each of its turns is more expensive than the last.
+
+> **The reframe:** tokens are the only unit that matters, and the conversation
+> re-pays for itself on every single turn — so a long session is a tax on every
+> message you send, not a record of work already done.
+
+### Where the tokens actually go
+
+In a Claude Code session, the conversation is only part of it. Also in there, from
+the start:
+
+- instructions the harness sets for itself
+- your `CLAUDE.md` and any memory files
+- the tool definitions the agent can call
+- environment details — working directory, platform, shell
+
+And accumulating as you work:
+
+- every file read, at full length
+- every command's output
+- the agent's own responses
+
+One `cat` of a large log file can cost more than an hour of conversation. This is
+why "just read the whole thing to be safe" is the most expensive thing an agent
+can do.
+
+### The number you can actually see
+
+Inside a Claude Code session:
+
+```
+/context
+```
+
+It draws the current window as a coloured grid, broken down by category, with
+suggestions for what to cut. That grid is the honest answer to "where are my
+tokens going" — better than any estimate, because it reads the real thing.
+
+Token prices, context sizes, and every command named here move. Check
+[code.claude.com/docs](https://code.claude.com/docs/llms.txt) and
+`claude --version` rather than trusting a number in this lesson.
 
 ---
 
 ## Build It
 
-Numbered steps the reader runs. Each step ends in something observable.
+### 1. Get a real count for a file
 
-1. First step.
-2. Second step.
+```bash
+wc -c COURSE-CONTEXT.md      # bytes
+```
+
+Characters ÷ 4 is a rough English estimate. Good enough to compare two files.
+Not good enough to quote as a price.
+
+✅ You pass when you have a character count and a stated estimate, and you know
+the estimate is approximate.
+
+### 2. Measure the thing that surprised you
+
+Find the largest file the agent read during a recent session, and the largest
+command output. Compare them to the total conversation so far:
+
+```bash
+ls -S | head -5
+```
+
+If one read dwarfs the conversation, you have found why a session cost what it
+cost.
+
+✅ You pass when you can name the single largest token source in a real session
+and its rough size.
+
+### 3. Predict before you run
+
+You are about to ask for a broad sweep: "find every place that calls `auth()` and
+report each one with its surrounding function."
+
+Predict: many file reads, each landing in context permanently. Write the
+prediction down.
+
+Now run it. Then open `/context` and see what it actually cost.
+
+✅ You pass when your written prediction and the measured result agree on which
+category grew most.
+
+### 4. Halve it on purpose
+
+Take the same sweep and constrain it:
+
+```text
+Find every place that calls `auth()`. Only report the file path and line number.
+Do not read surrounding code — just locate the call sites.
+```
+
+Compare `/context` before and after. Narrowing what comes *back* is as effective
+as narrowing what goes *out*.
+
+✅ You pass when the second sweep measurably grew context less than the first.
+
+### 5. Catch the re-read
+
+The classic waste: an agent searches, gets twenty candidates, reads all twenty,
+finds the answer in the third. Nineteen reads, one result, all twenty still in
+context.
+
+Watch it happen in `/context`. Then note what a better ask looks like: give the
+search enough to be narrow, and say what evidence you need back.
+
+✅ You pass when you have identified one real session where most of the cost was
+reads that turned out to be unnecessary.
 
 ---
 
 ## Use It
 
-| Command / concept | When you reach for it |
+| Concept | When you reach for it |
 |---|---|
-| — | — |
+| `/context` | Any time you want to know where the tokens went |
+| chars ÷ 4 | Comparing two files, before asking for either |
+| Predict-then-measure | Before any broad read or sweep |
+| Narrow the output, not just the input | Cutting cost without cutting the answer |
+| Repeated broad searches | Recognising the most common silent waste |
+| Longer session = pricier turn | Explaining a bill that surprised you |
 
 ---
 
 ## Exercises
 
-1. Do the thing.
-   ✅ You pass when <observable state>.
+1. Take any file in this repo over 2,000 lines. Estimate its token count from
+   character length, then have the agent report the actual count it saw in
+   context. Record both.
+   ✅ You pass when both numbers are in your notes and you can state the error of
+   your estimate as a percentage.
 
-2. Do the other thing.
-   ✅ You pass when <observable state>.
+2. Run one broad sweep and one narrowed sweep of the same task. Record
+   `/context` growth for each.
+   ✅ You pass when the second cost measurably less and you can name the single
+   phrase that did it.
+
+3. Find the highest-token command output you have ever pasted into a session.
+   Count it. Write down what you should have asked for instead.
+   ✅ You pass when your replacement request is three lines or fewer and returns
+   strictly what you needed.
 
 ---
 
@@ -63,10 +220,33 @@ Numbered steps the reader runs. Each step ends in something observable.
 
 | Term | What people say | What it actually means |
 |---|---|---|
-| — | — | — |
+| token | "a word" | A sub-word unit from a trained tokenizer. Roughly four English characters, but a split point inside a word, so length in characters does not predict it reliably. |
+| tokenizer | "the splitter" | The trained program producing those units. Each model family has its own, which is why token counts are not portable across models. |
+| input tokens | "the prompt" | Everything sent, including conversation history, file contents, tool definitions, and system instructions — not just what you typed. |
+| output tokens | "the reply" | What the model generated, including thinking where extended thinking is on. |
+| context | "the chat" | The full body of text the model sees on the next turn. Grows with every message, read, and tool result. |
+| re-send | "it remembers" | The entire conversation is transmitted again on every request. Long sessions tax each new message. |
 
 ---
 
 ## What this lesson skipped
 
-Name anything deliberately not covered, and when to come back for it.
+**Exact pricing and per-model rates.** They change, and quoting them here would
+be stale within weeks. Read them from
+[the costs page](https://code.claude.com/docs/en/costs) at the time you need
+them.
+
+**The context window as a budget.** Tokens are counted here; what the window
+*is*, what fills it, and what happens when it fills — that is Lesson 8, and it
+depends on this lesson.
+
+**Prompt caching.** Reading a file the same way twice can be cheaper the second
+time. It is real, it is measured in the `/usage` output, and it changes how you
+reason about repeated reads — but explaining it properly needs the context
+window, so it lands after Lesson 8.
+
+**Token counting APIs and libraries.** Exact counting is a one-line call in most
+SDKs. Useful, not foundational, and not needed for anything in this course.
+
+**Thinking tokens.** Billed as output. Arrives properly with model selection in
+Phase 03.
