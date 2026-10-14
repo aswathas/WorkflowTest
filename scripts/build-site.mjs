@@ -430,7 +430,7 @@ function renderIndex(cur, totals) {
 
   return `${head('Home', 0, SITE_TAGLINE)}
 <main id="main" class="container">
-  <section class="hero">
+  <section id="start" class="hero">
     <p class="lesson-meta-tag">HARNESSING / CLAUDE CODE</p>
     <h1>${esc(SITE_TAGLINE)}</h1>
     <p class="lesson-motto">A free, open-source course. ${totals.lessons} lessons across ${totals.phases} phases, ${totals.modules} graded practice modules. MCP, hooks, plugins, worktree isolation, dynamic workflows, harness engineering, task graphs.</p>
@@ -452,19 +452,19 @@ function renderIndex(cur, totals) {
     <p class="lede">Every abstraction in Claude Code resolves to something you can reason about, break, and rebuild. This course teaches the mechanism — not the prompt.</p>
   </section>
 
-  <section>
+  <section id="why">
     <h2>Why this course exists</h2>
     <p>Most agentic tooling is taught in two broken ways: as a list of features, or as prompts to copy. Neither teaches the <em>mechanism</em>. The same fear — losing work to an agent run — drives both failures. The fix is to know what the agent is doing. This course is that.</p>
   </section>
 
-  <section>
+  <section id="phases">
     <h2>The 19 phases</h2>
     <div class="phase-grid">
 ${cards}
     </div>
   </section>
 
-  <section>
+  <section id="agent-skills">
     <h2>Teaching it to yourself, with an agent</h2>
     <p>This repo is designed to be pointed at an AI agent. The <a href="developer.html">MCP server and REST API</a> are the agent entry points. Five skills, each invoked deliberately by the learner:</p>
     <div class="table-wrap"><table>
