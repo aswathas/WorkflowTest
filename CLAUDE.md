@@ -26,9 +26,17 @@ yet — `/domain-modeling` creates them lazily. See `docs/agents/domain.md`.
 
 `MISSION.md` records why the curriculum exists and gates every teaching decision.
 `NOTES.md` records how the learner learns and which misconceptions to revisit.
-`RESOURCES.md` holds primary sources. Lessons live in `lessons/`, quick-reference
-in `reference/`, reusable UI in `assets/`, and demonstrated understanding in
-`learning-records/`.
+`RESOURCES.md` holds primary sources.
+
+Lessons live in `phases/<NN-phase>/<NN-slug>/`, each holding `docs/` (the lesson
+prose), `code/` (the exercise) and `quiz.json`. Practice modules live in
+`practice/<NN-slug>/`. `site/` is generated from the markdown source by
+`scripts/build-site.mjs` — never hand-edit anything under it.
+
+> This section previously pointed at `lessons/`, `reference/`, `assets/` and
+> `learning-records/`. None of those existed except `lessons/`, which held a
+> single orphan HTML file from before the pivot to `phases/`. Writing to the paths
+> this used to name produced files nothing reads. See `docs/05-mvp.md`.
 
 ## Conventions that matter for agents
 
