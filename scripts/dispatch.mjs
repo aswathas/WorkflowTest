@@ -47,10 +47,16 @@ export async function runDeepseek(prompt, { timeoutMs = 180_000 } = {}) {
   return { source: 'deepseek', result: cleaned };
 }
 
-export async function dispatch(prompt, opts = {}) {
+export async function dispatch(prompt, opts = {}, runners = {}) {
+  // Injected so the fallback chain can be tested without invoking three CLIs.
+  // Callers pass two arguments and get the real runners.
+  const gemini = runners.gemini ?? dispatchGemini;
+  const agy = runners.agy ?? runAgy;
+  const deepseek = runners.deepseek ?? runDeepseek;
+
   // 1. Direct Gemini API (fastest, no CLI in path, your key in env)
   try {
-    return await dispatchGemini(prompt, opts);
+    return await gemini(prompt, opts);
   } catch (e) {
     if (!e.message || !e.message.includes('No Gemini API key')) {
       console.warn('[dispatch] gemini direct failed:', e.message.split('\n')[0]);
@@ -58,11 +64,11 @@ export async function dispatch(prompt, opts = {}) {
   }
   // 2. agy CLI (Gemini via Antigravity)
   try {
-    return await runAgy(prompt, opts);
+    return await agy(prompt, opts);
   } catch (e) {
     if (!isBudgetError(e.message)) throw e;
     console.warn('[dispatch] agy budget error, falling back to deepseek');
   }
   // 3. opencode / DeepSeek
-  return runDeepseek(prompt, opts);
+  return deepseek(prompt, opts);
 }
